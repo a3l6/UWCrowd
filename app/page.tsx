@@ -5,6 +5,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Search, MapPin, ChevronUp, ChevronDown, RefreshCw, Brain } from "lucide-react"
+import { useBuildingFluctuator } from "@/hooks/use-building-fluctuator"
 
 interface Location {
   id: string
@@ -23,38 +24,21 @@ interface Location {
   }
 }
 
-// Mock data as fallback
-const fallbackLocations: Location[] = [
-  {
-    id: "pac",
-    name: "Physical Activities Complex (PAC)",
-    busyLevel: 85,
-    status: "busy",
-    lastUpdated: new Date().toISOString(),
-    metrics: {
-      predictedBusiness: "High",
-      peopleCount: 247,
-      peakHours: "2:00-4:00 PM",
-    },
-  },
-  {
-    id: "cmh",
-    name: "Claudette Millar Hall (CMH)",
-    busyLevel: 92,
-    status: "busy",
-    lastUpdated: new Date().toISOString(),
-    metrics: {
-      predictedBusiness: "Very High",
-      peopleCount: 312,
-      peakHours: "1:30-3:30 PM",
-    },
-  },
-]
+// Building names mapping for display
+const buildingDisplayNames: Record<string, string> = {
+  "CMH": "Claudette Millar Hall (CMH)",
+  "PAC": "Physical Activities Complex (PAC)", 
+  "DC": "William G. Davis Computer Research Centre (DC)",
+  "E7": "Engineering 7 (E7)",
+  "Dana_Porter": "Dana Porter Library (Dana_Porter)",
+}
 
 export default function LocationsPage() {
+  const { buildingData: fluctuatorData } = useBuildingFluctuator()
   const [searchTerm, setSearchTerm] = useState("")
   const [expandedCards, setExpandedCards] = useState<Set<string>>(new Set())
-  const [locations, setLocations] = useState<Location[]>(fallbackLocations)
+  const [locations, setLocations] = useState<Location[]>([])
+  const [aiAnalysis, setAiAnalysis] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date())
 
@@ -66,16 +50,7 @@ export default function LocationsPage() {
       const data = await response.json()
       
       if (data.success && data.data) {
-        const aiLocations: Location[] = data.data.map((analysis: any) => ({
-          id: analysis.buildingId,
-          name: `${analysis.buildingName} (${analysis.shortName})`,
-          busyLevel: analysis.busyLevel,
-          status: analysis.status,
-          lastUpdated: analysis.lastUpdated,
-          metrics: analysis.metrics,
-        }))
-        
-        setLocations(aiLocations)
+        setAiAnalysis(data.data)
         setLastUpdated(new Date())
       }
     } catch (error) {
@@ -93,16 +68,7 @@ export default function LocationsPage() {
       const data = await response.json()
       
       if (data.success && data.data) {
-        const aiLocations: Location[] = data.data.map((analysis: any) => ({
-          id: analysis.buildingId,
-          name: `${analysis.buildingName} (${analysis.shortName})`,
-          busyLevel: analysis.busyLevel,
-          status: analysis.status,
-          lastUpdated: analysis.lastUpdated,
-          metrics: analysis.metrics,
-        }))
-        
-        setLocations(aiLocations)
+        setAiAnalysis(data.data)
         setLastUpdated(new Date())
       }
     } catch (error) {
@@ -125,6 +91,56 @@ export default function LocationsPage() {
 
     return () => clearInterval(interval)
   }, [])
+
+  // Combine fluctuating data with AI analysis
+  useEffect(() => {
+    const combinedLocations: Location[] = Object.entries(fluctuatorData).map(([buildingKey, data]) => {
+      // Find matching AI analysis for this building
+      const aiData = aiAnalysis.find(analysis => 
+        analysis.shortName === buildingKey || 
+        analysis.buildingId === buildingKey.toLowerCase()
+      )
+
+      return {
+        id: buildingKey.toLowerCase(),
+        name: buildingDisplayNames[buildingKey] || buildingKey,
+        busyLevel: data.percent_full,
+        status: data.percent_full > 50 ? "busy" : "not-busy",
+        lastUpdated: new Date().toISOString(),
+        metrics: {
+          predictedBusiness: aiData?.metrics?.predictedBusiness || getPredictedBusiness(data.percent_full),
+          peopleCount: data.people,
+          peakHours: aiData?.metrics?.peakHours || getEstimatedPeakHours(buildingKey),
+          comparedToYesterday: aiData?.metrics?.comparedToYesterday,
+          nextHourPrediction: aiData?.metrics?.nextHourPrediction,
+          bestTimeToGo: aiData?.metrics?.bestTimeToGo,
+          worstTimeToGo: aiData?.metrics?.worstTimeToGo,
+        }
+      }
+    })
+
+    setLocations(combinedLocations)
+  }, [fluctuatorData, aiAnalysis])
+
+  // Helper functions for fallback data
+  const getPredictedBusiness = (percentage: number): string => {
+    if (percentage >= 90) return "Very High"
+    if (percentage >= 70) return "High"
+    if (percentage >= 50) return "Medium"
+    if (percentage >= 30) return "Low"
+    return "Very Low"
+  }
+
+  const getEstimatedPeakHours = (buildingKey: string): string => {
+    const peakHours: Record<string, string> = {
+      "CMH": "1:00-3:00 PM",
+      "PAC": "5:00-7:00 PM",
+      "DC": "2:00-4:00 PM",
+      "E7": "10:00 AM-12:00 PM",
+      "Dana_Porter": "3:00-5:00 PM",
+    }
+    return peakHours[buildingKey] || "12:00-2:00 PM"
+  }
 
   const filteredAndSortedLocations = useMemo(() => {
     const filtered = locations.filter((location) =>
@@ -173,24 +189,30 @@ export default function LocationsPage() {
 
         {/* Button with updated timestamp underneath */}
         <div className="flex flex-col items-end gap-1">
-          <Button
-            onClick={refreshAIAnalysis}
-            disabled={isLoading}
-            variant="outline"
-            size="sm"
-          >
-            <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
-            Refresh AI
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              onClick={refreshAIAnalysis}
+              disabled={isLoading}
+              variant="outline"
+              size="sm"
+            >
+              <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
+              Refresh AI
+            </Button>
+            <div className="flex items-center gap-1 px-2 py-1 bg-green-100 dark:bg-green-900/20 rounded-md">
+              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+              <span className="text-xs text-green-700 dark:text-green-300">Live</span>
+            </div>
+          </div>
           <div className="text-xs text-muted-foreground">
-            Updated: {lastUpdated.toLocaleTimeString()}
+            AI Updated: {lastUpdated.toLocaleTimeString()}
           </div>
         </div>
       </div>
 
       {/* Slogan stays below the row if needed */}
       <p className="mt-4 text-muted-foreground text-base md:text-lg">
-        AI-powered real-time analysis of UW Campus Building Capacities
+        Live building occupancy with AI-powered insights • Updates every second
       </p>
     </div>
 

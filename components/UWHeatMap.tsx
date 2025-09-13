@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { RefreshCw, Users, Clock, MapPin } from "lucide-react"
 import { DatabaseStatus } from "./DatabaseStatus"
+import { useBuildingFluctuator } from "@/hooks/use-building-fluctuator"
 
 interface BuildingData {
   id: string
@@ -17,191 +18,27 @@ interface BuildingData {
   coordinates: [number, number] // [lat, lng]
 }
 
-const sampleBuildingData: BuildingData[] = [
-  {
-    id: "mc",
-    name: "Mathematics & Computer Building",
-    shortName: "MC",
-    currentOccupancy: 450,
-    maxCapacity: 600,
-    occupancyPercentage: 75,
-    coordinates: [43.4723, -80.5449],
-  },
-  {
-    id: "dc",
-    name: "William G. Davis Computer Research Centre",
-    shortName: "DC",
-    currentOccupancy: 320,
-    maxCapacity: 400,
-    occupancyPercentage: 80,
-    coordinates: [43.4728, -80.542],
-  },
-  {
-    id: "e2",
-    name: "Engineering 2",
-    shortName: "E2",
-    currentOccupancy: 280,
-    maxCapacity: 500,
-    occupancyPercentage: 56,
-    coordinates: [43.4715, -80.5397],
-  },
-  {
-    id: "e3",
-    name: "Engineering 3",
-    shortName: "E3",
-    currentOccupancy: 180,
-    maxCapacity: 350,
-    occupancyPercentage: 51,
-    coordinates: [43.4708, -80.5392],
-  },
-  {
-    id: "e5",
-    name: "Engineering 5",
-    shortName: "E5",
-    currentOccupancy: 420,
-    maxCapacity: 450,
-    occupancyPercentage: 93,
-    coordinates: [43.4701, -80.5376],
-  },
-  {
-    id: "e7",
-    name: "Engineering 7",
-    shortName: "E7",
-    currentOccupancy: 380,
-    maxCapacity: 400,
-    occupancyPercentage: 95,
-    coordinates: [43.4695, -80.5359],
-  },
-  {
-    id: "slc",
-    name: "Student Life Centre",
-    shortName: "SLC",
-    currentOccupancy: 850,
-    maxCapacity: 1200,
-    occupancyPercentage: 71,
-    coordinates: [43.4706, -80.537],
-  },
-  {
-    id: "pac",
-    name: "Physical Activities Complex",
-    shortName: "PAC",
-    currentOccupancy: 320,
-    maxCapacity: 800,
-    occupancyPercentage: 40,
-    coordinates: [43.4742, -80.546],
-  },
-  {
-    id: "al",
-    name: "Arts Lecture Hall",
-    shortName: "AL",
-    currentOccupancy: 150,
-    maxCapacity: 300,
-    occupancyPercentage: 50,
-    coordinates: [43.4688, -80.5423],
-  },
-  {
-    id: "ml",
-    name: "Modern Languages",
-    shortName: "ML",
-    currentOccupancy: 90,
-    maxCapacity: 200,
-    occupancyPercentage: 45,
-    coordinates: [43.4685, -80.5435],
-  },
-  {
-    id: "qnc",
-    name: "Quantum Nano Centre",
-    shortName: "QNC",
-    currentOccupancy: 120,
-    maxCapacity: 150,
-    occupancyPercentage: 80,
-    coordinates: [43.471, -80.5355],
-  },
-  {
-    id: "sch",
-    name: "South Campus Hall",
-    shortName: "SCH",
-    currentOccupancy: 200,
-    maxCapacity: 400,
-    occupancyPercentage: 50,
-    coordinates: [43.4665, -80.538],
-  },
-  {
-    id: "m3",
-    name: "Mathematics 3",
-    shortName: "M3",
-    currentOccupancy: 180,
-    maxCapacity: 250,
-    occupancyPercentage: 72,
-    coordinates: [43.4734, -80.5458],
-  },
-  {
-    id: "c2",
-    name: "Chemistry 2",
-    shortName: "C2",
-    currentOccupancy: 160,
-    maxCapacity: 300,
-    occupancyPercentage: 53,
-    coordinates: [43.472, -80.5425],
-  },
-  {
-    id: "b1",
-    name: "Biology 1",
-    shortName: "B1",
-    currentOccupancy: 140,
-    maxCapacity: 280,
-    occupancyPercentage: 50,
-    coordinates: [43.4718, -80.5415],
-  },
-  {
-    id: "b2",
-    name: "Biology 2",
-    shortName: "B2",
-    currentOccupancy: 110,
-    maxCapacity: 220,
-    occupancyPercentage: 50,
-    coordinates: [43.4716, -80.541],
-  },
-  {
-    id: "ph",
-    name: "Physics",
-    shortName: "PH",
-    currentOccupancy: 95,
-    maxCapacity: 180,
-    occupancyPercentage: 53,
-    coordinates: [43.4714, -80.5405],
-  },
-  {
-    id: "rch",
-    name: "J.R. Coutts Engineering Lecture Hall",
-    shortName: "RCH",
-    currentOccupancy: 200,
-    maxCapacity: 400,
-    occupancyPercentage: 50,
-    coordinates: [43.4698, -80.5385],
-  },
-  {
-    id: "dwe",
-    name: "Douglas Wright Engineering Building",
-    shortName: "DWE",
-    currentOccupancy: 180,
-    maxCapacity: 320,
-    occupancyPercentage: 56,
-    coordinates: [43.4693, -80.538],
-  },
-  {
-    id: "cph",
-    name: "Carl A. Pollock Hall",
-    shortName: "CPH",
-    currentOccupancy: 220,
-    maxCapacity: 350,
-    occupancyPercentage: 63,
-    coordinates: [43.469, -80.5375],
-  },
-]
+// Building coordinates mapping for the fluctuator buildings
+const buildingCoordinates: Record<string, [number, number]> = {
+  "CMH": [43.4723, -80.5449], // Mathematics & Computer Building area
+  "PAC": [43.4742, -80.546],  // Physical Activities Complex
+  "DC": [43.4728, -80.542],   // William G. Davis Computer Research Centre
+  "E7": [43.4695, -80.5359],  // Engineering 7
+  "Dana_Porter": [43.4688, -80.5423], // Dana Porter Library area
+}
+
+// Building full names mapping
+const buildingNames: Record<string, string> = {
+  "CMH": "Mathematics & Computer Building",
+  "PAC": "Physical Activities Complex", 
+  "DC": "William G. Davis Computer Research Centre",
+  "E7": "Engineering 7",
+  "Dana_Porter": "Dana Porter Library",
+}
 
 export function WaterlooHeatMap() {
-  const [buildingData, setBuildingData] = useState<BuildingData[]>(sampleBuildingData)
+  const { buildingData: fluctuatorData, rawPercentages } = useBuildingFluctuator()
+  const [buildingData, setBuildingData] = useState<BuildingData[]>([])
   const [selectedBuilding, setSelectedBuilding] = useState<BuildingData | null>(null)
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date())
   const [isRefreshing, setIsRefreshing] = useState(false)
@@ -209,24 +46,33 @@ export function WaterlooHeatMap() {
   const leafletMapRef = useRef<any>(null)
   const markersRef = useRef<any[]>([])
 
-  // Load initial data from API
+  // Convert fluctuator data to BuildingData format
   useEffect(() => {
-    loadBuildingData()
-  }, [])
-
-  // Listen for real-time updates
-  useEffect(() => {
-    const handleDataUpdate = (event: CustomEvent) => {
-      setBuildingData(event.detail.buildings)
-      setLastUpdated(new Date(event.detail.lastUpdated))
-    }
-
-    window.addEventListener('buildingDataUpdated', handleDataUpdate as EventListener)
+    const convertedData: BuildingData[] = Object.entries(fluctuatorData).map(([buildingKey, data]) => ({
+      id: buildingKey.toLowerCase(),
+      name: buildingNames[buildingKey] || buildingKey,
+      shortName: buildingKey,
+      currentOccupancy: data.people,
+      maxCapacity: buildingKey === "CMH" ? 600 : 
+                   buildingKey === "PAC" ? 200 :
+                   buildingKey === "DC" ? 1500 :
+                   buildingKey === "E7" ? 1550 :
+                   buildingKey === "Dana_Porter" ? 400 : 500,
+      occupancyPercentage: data.percent_full,
+      coordinates: buildingCoordinates[buildingKey] || [43.4723, -80.5449]
+    }))
     
-    return () => {
-      window.removeEventListener('buildingDataUpdated', handleDataUpdate as EventListener)
+    setBuildingData(convertedData)
+    setLastUpdated(new Date())
+
+    // Update selected building if it exists to keep it in sync with fluctuating data
+    if (selectedBuilding) {
+      const updatedSelectedBuilding = convertedData.find(b => b.id === selectedBuilding.id)
+      if (updatedSelectedBuilding) {
+        setSelectedBuilding(updatedSelectedBuilding)
+      }
     }
-  }, [])
+  }, [fluctuatorData, selectedBuilding?.id])
 
   // Initialize map
   useEffect(() => {
@@ -325,25 +171,14 @@ export function WaterlooHeatMap() {
     })
   }
 
-  // Load building data from API
-  const loadBuildingData = async () => {
-    try {
-      const response = await fetch('/api/information')
-      const data = await response.json()
-      
-      if (data.buildings && data.buildings.length > 0) {
-        setBuildingData(data.buildings)
-        setLastUpdated(new Date(data.lastUpdated))
-      }
-    } catch (error) {
-      console.error('Error loading building data:', error)
-    }
-  }
-
   const refreshData = async () => {
     setIsRefreshing(true)
-    await loadBuildingData()
-    setIsRefreshing(false)
+    // The data refreshes automatically via the fluctuator hook
+    // This is just for UI feedback
+    setTimeout(() => {
+      setIsRefreshing(false)
+      setLastUpdated(new Date())
+    }, 500)
   }
 
   // Trigger manual database save
@@ -499,7 +334,13 @@ export function WaterlooHeatMap() {
               <CardHeader>
                 <CardTitle className="flex items-center justify-between">
                   <span>{selectedBuilding.shortName}</span>
-                  <Badge variant={getOccupancyLevel(selectedBuilding.occupancyPercentage).color as any}>
+                  <Badge 
+                    variant={getOccupancyLevel(selectedBuilding.occupancyPercentage).color as any}
+                    style={{ 
+                      backgroundColor: getHeatColor(selectedBuilding.occupancyPercentage),
+                      color: getTextColor(getHeatColor(selectedBuilding.occupancyPercentage))
+                    }}
+                  >
                     {getOccupancyLevel(selectedBuilding.occupancyPercentage).label}
                   </Badge>
                 </CardTitle>
@@ -511,17 +352,25 @@ export function WaterlooHeatMap() {
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
-                  <div>
+                  <div className="p-3 rounded-lg border" style={{ 
+                    backgroundColor: `${getHeatColor(selectedBuilding.occupancyPercentage)}15`,
+                    borderColor: getHeatColor(selectedBuilding.occupancyPercentage)
+                  }}>
                     <h4 className="font-medium text-sm text-muted-foreground mb-1">Current</h4>
                     <div className="flex items-center gap-1">
-                      <Users className="h-4 w-4" />
-                      <span className="text-lg font-semibold">{selectedBuilding.currentOccupancy}</span>
+                      <Users className="h-4 w-4" style={{ color: getHeatColor(selectedBuilding.occupancyPercentage) }} />
+                      <span 
+                        className="text-lg font-semibold transition-all duration-500"
+                        style={{ color: getHeatColor(selectedBuilding.occupancyPercentage) }}
+                      >
+                        {selectedBuilding.currentOccupancy}
+                      </span>
                     </div>
                   </div>
-                  <div>
+                  <div className="p-3 rounded-lg border border-muted">
                     <h4 className="font-medium text-sm text-muted-foreground mb-1">Capacity</h4>
                     <div className="flex items-center gap-1">
-                      <Users className="h-4 w-4" />
+                      <Users className="h-4 w-4 text-muted-foreground" />
                       <span className="text-lg font-semibold">{selectedBuilding.maxCapacity}</span>
                     </div>
                   </div>
@@ -531,18 +380,35 @@ export function WaterlooHeatMap() {
                   <h4 className="font-medium text-sm text-muted-foreground mb-2">Occupancy Rate</h4>
                   <div className="space-y-2">
                     <div className="flex justify-between text-sm">
-                      <span>{selectedBuilding.occupancyPercentage}%</span>
+                      <span 
+                        className="font-semibold transition-all duration-500"
+                        style={{ color: getHeatColor(selectedBuilding.occupancyPercentage) }}
+                      >
+                        {selectedBuilding.occupancyPercentage}%
+                      </span>
                       <span>
                         {selectedBuilding.currentOccupancy} / {selectedBuilding.maxCapacity}
                       </span>
                     </div>
-                    <div className="w-full bg-muted rounded-full h-2">
+                    <div className="w-full bg-muted rounded-full h-3 overflow-hidden">
                       <div
-                        className="bg-secondary h-2 rounded-full transition-all duration-300"
-                        style={{ width: `${selectedBuilding.occupancyPercentage}%` }}
+                        className="h-3 rounded-full transition-all duration-1000 ease-in-out"
+                        style={{ 
+                          width: `${selectedBuilding.occupancyPercentage}%`,
+                          backgroundColor: getHeatColor(selectedBuilding.occupancyPercentage)
+                        }}
                       ></div>
                     </div>
                   </div>
+                </div>
+
+                {/* Live indicator */}
+                <div className="flex items-center justify-center gap-2 p-2 bg-muted rounded-md">
+                  <div 
+                    className="w-2 h-2 rounded-full animate-pulse"
+                    style={{ backgroundColor: getHeatColor(selectedBuilding.occupancyPercentage) }}
+                  ></div>
+                  <span className="text-xs text-muted-foreground">Live Data</span>
                 </div>
               </CardContent>
             </Card>
@@ -559,31 +425,115 @@ export function WaterlooHeatMap() {
 
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg">Campus Summary</CardTitle>
+              <CardTitle className="text-lg flex items-center gap-2">
+                Campus Summary
+                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+              </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-3">
+            <CardContent className="space-y-4">
               <div className="flex justify-between items-center">
                 <span className="text-sm text-muted-foreground">Total Buildings</span>
                 <span className="font-semibold">{buildingData.length}</span>
               </div>
+              
               <div className="flex justify-between items-center">
                 <span className="text-sm text-muted-foreground">Total Occupancy</span>
-                <span className="font-semibold">
+                <span className="font-semibold text-lg transition-all duration-500">
                   {buildingData.reduce((sum, b) => sum + b.currentOccupancy, 0).toLocaleString()}
                 </span>
               </div>
+              
               <div className="flex justify-between items-center">
                 <span className="text-sm text-muted-foreground">Total Capacity</span>
                 <span className="font-semibold">
                   {buildingData.reduce((sum, b) => sum + b.maxCapacity, 0).toLocaleString()}
                 </span>
               </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-muted-foreground">Average Occupancy</span>
-                <span className="font-semibold">
-                  {Math.round(buildingData.reduce((sum, b) => sum + b.occupancyPercentage, 0) / buildingData.length)}%
-                </span>
+              
+              {(() => {
+                const avgOccupancy = buildingData.length > 0 
+                  ? Math.round(buildingData.reduce((sum, b) => sum + b.occupancyPercentage, 0) / buildingData.length)
+                  : 0;
+                return (
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-muted-foreground">Average Occupancy</span>
+                      <span 
+                        className="font-semibold text-lg transition-all duration-500"
+                        style={{ color: getHeatColor(avgOccupancy) }}
+                      >
+                        {avgOccupancy}%
+                      </span>
+                    </div>
+                    <div className="w-full bg-muted rounded-full h-2">
+                      <div
+                        className="h-2 rounded-full transition-all duration-1000 ease-in-out"
+                        style={{ 
+                          width: `${avgOccupancy}%`,
+                          backgroundColor: getHeatColor(avgOccupancy)
+                        }}
+                      ></div>
+                    </div>
+                  </div>
+                );
+              })()}
+
+              {/* Individual building status indicators */}
+              <div className="space-y-2 pt-2 border-t">
+                <h5 className="text-xs font-semibold text-muted-foreground mb-2">Building Status</h5>
+                {buildingData.map((building) => (
+                  <div key={building.id} className="flex items-center justify-between text-xs">
+                    <div className="flex items-center gap-2">
+                      <div 
+                        className="w-2 h-2 rounded-full transition-all duration-500"
+                        style={{ backgroundColor: getHeatColor(building.occupancyPercentage) }}
+                      ></div>
+                      <span className="font-medium">{building.shortName}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span 
+                        className="font-semibold transition-all duration-500"
+                        style={{ color: getHeatColor(building.occupancyPercentage) }}
+                      >
+                        {building.currentOccupancy}
+                      </span>
+                      <span className="text-muted-foreground">
+                        ({building.occupancyPercentage}%)
+                      </span>
+                    </div>
+                  </div>
+                ))}
               </div>
+
+              {/* Campus status indicator */}
+              {(() => {
+                const totalOccupancy = buildingData.reduce((sum, b) => sum + b.currentOccupancy, 0);
+                const totalCapacity = buildingData.reduce((sum, b) => sum + b.maxCapacity, 0);
+                const overallPercentage = totalCapacity > 0 ? Math.round((totalOccupancy / totalCapacity) * 100) : 0;
+                
+                return (
+                  <div className="p-3 rounded-lg border transition-all duration-500" style={{
+                    backgroundColor: `${getHeatColor(overallPercentage)}15`,
+                    borderColor: getHeatColor(overallPercentage)
+                  }}>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium">Campus Status</span>
+                      <span 
+                        className="text-sm font-bold"
+                        style={{ color: getHeatColor(overallPercentage) }}
+                      >
+                        {overallPercentage >= 80 ? "Very Busy" : 
+                         overallPercentage >= 60 ? "Busy" : 
+                         overallPercentage >= 40 ? "Moderate" : 
+                         overallPercentage >= 20 ? "Light" : "Very Light"}
+                      </span>
+                    </div>
+                    <div className="text-xs text-muted-foreground mt-1">
+                      {totalOccupancy.toLocaleString()} / {totalCapacity.toLocaleString()} people ({overallPercentage}%)
+                    </div>
+                  </div>
+                );
+              })()}
             </CardContent>
           </Card>
         </div>

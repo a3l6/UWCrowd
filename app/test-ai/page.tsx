@@ -4,6 +4,7 @@ import { useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Brain, RefreshCw } from "lucide-react"
+import { BuildingFluctuatorDemo } from "@/components/BuildingFluctuatorDemo"
 
 export default function TestAIPage() {
   const [aiData, setAiData] = useState<any>(null)
@@ -118,6 +119,10 @@ export default function TestAIPage() {
           )}
         </CardContent>
       </Card>
+
+      <div className="mt-8">
+        <BuildingFluctuatorDemo />
+      </div>
     </div>
   )
 }
