@@ -15,7 +15,6 @@ interface Location {
   metrics: {
     predictedBusiness: string
     peopleCount: number
-    avgWaitTime: string
     peakHours: string
     comparedToYesterday?: string
     nextHourPrediction?: string
@@ -35,7 +34,6 @@ const fallbackLocations: Location[] = [
     metrics: {
       predictedBusiness: "High",
       peopleCount: 247,
-      avgWaitTime: "3-5 min",
       peakHours: "2:00-4:00 PM",
     },
   },
@@ -48,7 +46,6 @@ const fallbackLocations: Location[] = [
     metrics: {
       predictedBusiness: "Very High",
       peopleCount: 312,
-      avgWaitTime: "5-8 min",
       peakHours: "1:30-3:30 PM",
     },
   },
@@ -163,45 +160,52 @@ export default function LocationsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="container mx-auto px-4 py-8 max-w-4xl">
-        {/* Header */}
-        <div className="mb-9">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-foreground mb-2 flex items-center gap-2">
-                <Brain className="h-8 w-8 text-primary" />
-                UW Crowd
-              </h1>
-              <p className="text-muted-foreground">AI-powered real-time analysis of UW Campus Building Capacities</p>
-            </div>
-            <div className="flex items-center gap-2">
-              <Button 
-                onClick={refreshAIAnalysis} 
-                disabled={isLoading} 
-                variant="outline" 
-                size="sm"
-              >
-                <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? "animate-spin" : ""}`} />
-                Refresh AI
-              </Button>
-              <div className="text-xs text-muted-foreground">
-                Updated: {lastUpdated.toLocaleTimeString()}
-              </div>
-            </div>
+<div className="min-h-screen bg-background">
+  <div className="container mx-auto px-4 py-8 max-w-4xl">
+    {/* Header */}
+    <div className="mt-8 mb-10">
+      <div className="flex items-center justify-between">
+        {/* Heading */}
+        <h1 className="text-3xl md:text-4xl font-extrabold mb-2 flex items-center gap-2">
+          <span style={{ color: '#FCA311' }}>UW</span>
+          <span style={{ color: '#14213D' }}>Crowd</span>
+        </h1>
+
+        {/* Button with updated timestamp underneath */}
+        <div className="flex flex-col items-end gap-1">
+          <Button
+            onClick={refreshAIAnalysis}
+            disabled={isLoading}
+            variant="outline"
+            size="sm"
+          >
+            <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
+            Refresh AI
+          </Button>
+          <div className="text-xs text-muted-foreground">
+            Updated: {lastUpdated.toLocaleTimeString()}
           </div>
         </div>
-        {/* Search Bar */}
-        <div className="relative mb-6">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-          <Input
-            type="text"
-            placeholder="Search locations..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10 h-12 text-base bg-card border-border"
-          />
-        </div>
+      </div>
+
+      {/* Slogan stays below the row if needed */}
+      <p className="mt-4 text-muted-foreground text-base md:text-lg">
+        AI-powered real-time analysis of UW Campus Building Capacities
+      </p>
+    </div>
+
+    {/* Search Bar */}
+    <div className="relative mb-6">
+      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+      <Input
+        type="text"
+        placeholder="Search locations..."
+        value={searchTerm}
+        onChange={(e) => setSearchTerm(e.target.value)}
+        className="pl-10 h-12 text-base bg-card border-border"
+      />
+    </div>
+
 
         {/* Location Cards */}
         <div className="space-y-2">
@@ -271,9 +275,9 @@ export default function LocationsPage() {
                     <div className="border-t border-border pt-3 mt-3 space-y-3">
                       {/* AI Insights Section */}
                       {(location.metrics.comparedToYesterday || location.metrics.nextHourPrediction) && (
-                        <div className="bg-blue-50 dark:bg-blue-950/20 p-2 rounded-md">
+                        <div className=" dark:bg-blue-950/20 p-2 rounded-md">
                           <h4 className="text-xs font-semibold text-blue-800 dark:text-blue-200 mb-1 flex items-center gap-1">
-                            <Brain className="h-3 w-3" />
+                          
                             AI Insights
                           </h4>
                           <div className="space-y-1">
@@ -293,9 +297,9 @@ export default function LocationsPage() {
 
                       {/* Recommendations */}
                       {(location.metrics.bestTimeToGo || location.metrics.worstTimeToGo) && (
-                        <div className="bg-green-50 dark:bg-green-950/20 p-2 rounded-md">
+                        <div className=" dark:bg-green-950/20 p-2 rounded-md">
                           <h4 className="text-xs font-semibold text-green-800 dark:text-green-200 mb-1">
-                            🎯 Recommendations
+                            Recommendations
                           </h4>
                           <div className="space-y-1">
                             {location.metrics.bestTimeToGo && (
@@ -326,12 +330,6 @@ export default function LocationsPage() {
                           <h4 className="text-xs font-semibold text-foreground">People Count</h4>
                           <p className="text-xs text-muted-foreground">
                             {location.metrics.peopleCount} people
-                          </p>
-                        </div>
-                        <div>
-                          <h4 className="text-xs font-semibold text-foreground">Avg. Wait Time</h4>
-                          <p className="text-xs text-muted-foreground">
-                            {location.metrics.avgWaitTime}
                           </p>
                         </div>
                         <div>

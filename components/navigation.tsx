@@ -24,7 +24,10 @@ export default function Navigation() {
             <div className="flex items-center justify-center w-6 h-6 sm:w-8 sm:h-8 bg-[#FCA311] rounded-lg">
               <MapPin className="h-3 w-3 sm:h-5 sm:w-5 text-white" />
             </div>
-            <span className="text-lg sm:text-xl font-bold text-white">UW Crowd</span>
+            <span className="text-lg sm:text-xl font-bold text-white">
+          <span style={{ color: '#FCA311' }}>UW </span>
+          <span style={{ color: '#FFFFFF' }}>Crowd</span>
+            </span>
           </div>
 
           <div className="flex items-center gap-3 sm:gap-6 md:gap-8">

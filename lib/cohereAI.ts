@@ -1,7 +1,11 @@
+// Real Cohere AI integration - use this when you want to enable actual AI analysis
+// To use this, replace the import in your API route from './cohereAI' to './cohereAI-real'
+
 import { supabase } from './supabase'
 
-// For now, we'll use a mock AI service to avoid API issues
-// You can replace this with actual Cohere API calls later
+
+// You'll need to install and configure cohere-ai properly
+// npm install cohere-ai@latest
 
 export interface AIAnalysis {
   buildingId: string
@@ -22,10 +26,35 @@ export interface AIAnalysis {
   }
 }
 
-export interface HistoricalData {
-  building_id: string
-  current_occupancy: number
-  created_at: string
+// Real Cohere implementation
+async function callCohereAPI(prompt: string): Promise<any> {
+  try {
+    // Using fetch to call Cohere API directly
+    const response = await fetch('https://api.cohere.ai/v1/generate', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${process.env.COHERE_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'command',
+        prompt: prompt,
+        max_tokens: 500,
+        temperature: 0.3,
+        stop_sequences: [],
+      }),
+    })
+
+    if (!response.ok) {
+      throw new Error(`Cohere API error: ${response.status}`)
+    }
+
+    const data = await response.json()
+    return data.generations[0].text
+  } catch (error) {
+    console.error('Cohere API error:', error)
+    throw error
+  }
 }
 
 // Get historical data from the last 24 hours for a building
@@ -41,14 +70,8 @@ async function getHistoricalData(buildingId: string): Promise<number[]> {
       .gte('created_at', twentyFourHoursAgo.toISOString())
       .order('created_at', { ascending: true })
 
-    if (error) {
-      console.error('Error fetching historical data:', error)
-      // Return simulated data if database query fails
-      return Array.from({ length: 288 }, () => Math.floor(Math.random() * 150) + 50)
-    }
-
-    if (!data || data.length === 0) {
-      // Return simulated data if no historical data exists
+    if (error || !data || data.length === 0) {
+      // Return simulated data if database query fails or no data
       return Array.from({ length: 288 }, () => Math.floor(Math.random() * 150) + 50)
     }
 
@@ -67,77 +90,64 @@ async function getHistoricalData(buildingId: string): Promise<number[]> {
       })
 
       if (intervalData.length > 0) {
-        // Use average if multiple data points in interval
         const average = intervalData.reduce((sum, record) => sum + record.current_occupancy, 0) / intervalData.length
         intervals.push(Math.round(average))
       } else {
-        // Use previous value or interpolate
         const lastValue = intervals[intervals.length - 1] || 100
-        intervals.push(lastValue + Math.floor(Math.random() * 21) - 10) // Small variation
+        intervals.push(lastValue + Math.floor(Math.random() * 21) - 10)
       }
     }
 
     return intervals
   } catch (error) {
     console.error('Error in getHistoricalData:', error)
-    // Return simulated data as fallback
     return Array.from({ length: 288 }, () => Math.floor(Math.random() * 150) + 50)
   }
 }
 
-// Mock AI analysis function (replace with real Cohere API later)
-function mockAIAnalysis(historicalData: number[], buildingName: string): any {
-  const currentHour = new Date().getHours()
-  const avgOccupancy = historicalData.reduce((sum, val) => sum + val, 0) / historicalData.length
-  const currentOccupancy = historicalData[historicalData.length - 1] || avgOccupancy
-  
-  // Simple trend analysis
-  const recentData = historicalData.slice(-12) // Last hour (12 * 5min intervals)
-  const earlierData = historicalData.slice(-24, -12) // Previous hour
-  
-  const recentAvg = recentData.reduce((sum, val) => sum + val, 0) / recentData.length
-  const earlierAvg = earlierData.reduce((sum, val) => sum + val, 0) / earlierData.length
-  
-  const trend = recentAvg > earlierAvg ? "increasing" : "decreasing"
-  const comparedToYesterday = Math.random() > 0.5 ? "More busy" : "Less busy"
-  
-  // Predict next hour based on current time and trend
-  let nextHourPrediction = "Expected to remain stable"
-  if (currentHour >= 11 && currentHour <= 14) {
-    nextHourPrediction = "Expected to get more busy"
-  } else if (currentHour >= 17 || currentHour <= 8) {
-    nextHourPrediction = "Expected to get less busy"
-  }
-  
-  // Determine business level
-  let predictedBusiness = "Moderate"
-  if (currentOccupancy > avgOccupancy * 1.3) predictedBusiness = "Very High"
-  else if (currentOccupancy > avgOccupancy * 1.1) predictedBusiness = "High"
-  else if (currentOccupancy < avgOccupancy * 0.7) predictedBusiness = "Low"
-  else if (currentOccupancy < avgOccupancy * 0.5) predictedBusiness = "Very Low"
-  
-  // Generate recommendations
-  const bestTimeHour = currentHour < 10 ? currentHour + 2 : (currentHour > 16 ? 20 : 15)
-  const worstTimeHour = currentHour >= 11 && currentHour <= 14 ? 13 : 12
-  
-  return {
-    comparedToYesterday,
-    nextHourPrediction,
-    bestTimeToGo: `Best time to go at ${bestTimeHour}:00`,
-    worstTimeToGo: `Worst time to go at ${worstTimeHour}:00`,
-    predictedBusiness,
-    avgWaitTime: predictedBusiness === "Very High" ? "5-8 min" : predictedBusiness === "High" ? "3-5 min" : "1-3 min",
-    peakHours: "12:00 PM - 2:00 PM"
-  }
-}
-
-// Analyze building data using mock AI (replace with Cohere later)
+// Analyze building data using real Cohere AI
 async function analyzeBuilding(buildingId: string, buildingName: string, shortName: string): Promise<AIAnalysis> {
   try {
     const historicalData = await getHistoricalData(buildingId)
+    const dataString = historicalData.join(', ')
+
+    const prompt = `
+Here is the historical occupancy data for ${buildingName} (${shortName}) today in 5-minute intervals: [${dataString}].
+The data represents the number of people in the building over the last 24 hours.
+
+Analyze the data and provide a JSON response with the following structure:
+{
+  "comparedToYesterday": "More busy" or "Less busy",
+  "nextHourPrediction": "Expected to get more busy" or "Expected to get less busy",
+  "bestTimeToGo": "Best time to go in X minutes/hours",
+  "worstTimeToGo": "Worst time to go in X minutes/hours",
+  "predictedBusiness": "Very High", "High", "Moderate", "Low", or "Very Low",
+  "avgWaitTime": "X-Y min",
+  "peakHours": "X:XX AM/PM - Y:XX AM/PM"
+}
+
+Base your analysis on the trends in the data. Consider the current time and provide realistic recommendations.
+Respond only with valid JSON, no additional text.
+`
+
+    const aiResponseText = await callCohereAPI(prompt)
     
-    // Use mock AI analysis for now
-    const aiResponse = mockAIAnalysis(historicalData, buildingName)
+    let aiResponse
+    try {
+      aiResponse = JSON.parse(aiResponseText)
+    } catch (parseError) {
+      console.error('Error parsing AI response:', parseError)
+      // Fallback response
+      aiResponse = {
+        comparedToYesterday: "Similar to yesterday",
+        nextHourPrediction: "Expected to remain stable",
+        bestTimeToGo: "Best time to go in 2 hours",
+        worstTimeToGo: "Worst time to go in 30 minutes",
+        predictedBusiness: "Moderate",
+        avgWaitTime: "2-4 min",
+        peakHours: "12:00 PM - 2:00 PM"
+      }
+    }
 
     // Calculate current metrics
     const currentOccupancy = historicalData[historicalData.length - 1] || 100
@@ -187,7 +197,6 @@ async function analyzeBuilding(buildingId: string, buildingName: string, shortNa
   }
 }
 
-// Get max capacity for a building (you can expand this based on your building data)
 function getMaxCapacity(buildingId: string): number {
   const capacities: Record<string, number> = {
     'pac': 800,
@@ -203,7 +212,6 @@ function getMaxCapacity(buildingId: string): number {
   return capacities[buildingId] || 300
 }
 
-// Analyze all buildings
 export async function analyzeAllBuildings(): Promise<AIAnalysis[]> {
   const buildings = [
     { id: 'pac', name: 'Physical Activities Complex', shortName: 'PAC' },
@@ -222,7 +230,6 @@ export async function analyzeAllBuildings(): Promise<AIAnalysis[]> {
   return analyses
 }
 
-// Cache for AI analyses
 let cachedAnalyses: AIAnalysis[] = []
 let lastAnalysisTime = 0
 const CACHE_DURATION = 20 * 60 * 1000 // 20 minutes
@@ -238,3 +245,4 @@ export async function getCachedAnalyses(): Promise<AIAnalysis[]> {
   
   return cachedAnalyses
 }
+

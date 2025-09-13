@@ -6,8 +6,12 @@ export default function AboutPage() {
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8 max-w-4xl">
         {/* Header */}
-        <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold text-foreground mb-4 text-balance">About UW Crowd</h1>
+        <div className="text-center mt-8 mb-10">
+          <h1 className="text-4xl font-bold text-foreground mb-4 text-balance">
+          <span style={{ color: '#14213D' }}>About </span>
+          <span style={{ color: '#FCA311' }}>UW </span>
+          <span style={{ color: '#14213D' }}>Crowd</span>
+          </h1>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto text-pretty">
 Making Student Life Smarter with Real-Time Campus Location Tracking          </p>
         </div>
