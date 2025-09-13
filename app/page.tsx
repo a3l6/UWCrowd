@@ -179,12 +179,14 @@ export default function LocationsPage() {
 
     return (
       <Card
-        key={location.id}
-        className="w-full transition-all duration-200 hover:shadow-md border"
+  key={location.id}
+  className="w-full transition-all duration-200 hover:shadow-md border cursor-pointer hover:scale-[1.01]"
         style={{
           backgroundColor: getBusyLevelBgColor(location.busyLevel),
           borderColor: getBusyLevelColor(location.busyLevel),
         }}
+          onClick={() => toggleExpanded(location.id)} // ← HERE
+
       >
         {/* Minimal vertical padding, small horizontal padding */}
         <CardContent className="px-3 py-1">
@@ -219,14 +221,9 @@ export default function LocationsPage() {
                 {autoStatus === "busy" ? "Busy" : "Not Busy"}
               </span>
 
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => toggleExpanded(location.id)}
-                className="h-6 w-6 p-0 hover:bg-black/10 dark:hover:bg-white/10"
-              >
-                {isExpanded ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
-              </Button>
+              <div className="h-8 w-8 flex items-center justify-center">
+  {isExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+</div>
             </div>
           </div>
 
