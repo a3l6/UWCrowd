@@ -52,6 +52,48 @@ const fallbackLocations: Location[] = [
       peakHours: "1:30-3:30 PM",
     },
   },
+<<<<<<< Updated upstream
+=======
+  {
+    id: "3",
+    name: "Dana Porter Library (DP)",
+    busyLevel: 67,
+    status: "busy",
+    lastUpdated: "2024-01-10",
+    metrics: {
+      predictedBusiness: "Moderate",
+      peopleCount: 156,
+      avgWaitTime: "2-3 min",
+      peakHours: "11:00 AM-1:00 PM",
+    },
+  },
+  {
+    id: "4",
+    name: "Engineering 7 (E7)",
+    busyLevel: 100,
+    status: "not-busy",
+    lastUpdated: "2024-01-08",
+    metrics: {
+      predictedBusiness: "Low",
+      peopleCount: 10,
+      avgWaitTime: "1-2 min",
+      peakHours: "10:00 AM-12:00 PM",
+    },
+  },
+  {
+    id: "5",
+    name: "Davis Center (DC)",
+    busyLevel: 10,
+    status: "busy",
+    lastUpdated: "2024-01-14",
+    metrics: {
+      predictedBusiness: "High",
+      peopleCount: 203,
+      avgWaitTime: "3-4 min",
+      peakHours: "2:30-4:30 PM",
+    },
+  },
+>>>>>>> Stashed changes
 ]
 
 export default function LocationsPage() {
@@ -166,6 +208,7 @@ export default function LocationsPage() {
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8 max-w-4xl">
         {/* Header */}
+<<<<<<< Updated upstream
         <div className="mb-8">
           <div className="flex items-center justify-between">
             <div>
@@ -191,6 +234,15 @@ export default function LocationsPage() {
             </div>
           </div>
         </div>
+=======
+<div className="mb-9 text-center">
+  <h1 className="text-3xl md:text-4xl font-bold mb-2">UW Crowd</h1>
+  <p className="text-muted-foreground mb-4">Real-time building capacity updates</p>
+  {/* Divider */}
+  <div className="w-55 h-1 bg-primary mx-auto rounded-full"></div>
+</div>
+
+>>>>>>> Stashed changes
 
         {/* Search Bar */}
         <div className="relative mb-6">
@@ -220,7 +272,7 @@ export default function LocationsPage() {
                 }}
                 onClick={() => toggleExpanded(location.id)}
               >
-                <CardContent className="px-4 py-3">
+                <CardContent className="px-3 py-0">
                   <div className="flex items-center justify-between gap-3">
                     {/* Left side */}
                     <div className="flex items-center gap-2 flex-1 min-w-0">
@@ -366,6 +418,7 @@ export default function LocationsPage() {
     </div>
   )
 }
+
 
 
 
