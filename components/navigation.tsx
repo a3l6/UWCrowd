@@ -20,7 +20,7 @@ export default function Navigation() {
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           {/* Logo and Brand */}
-          <div className="flex items-center gap-2 sm:gap-3">
+          <Link href="/" className="flex items-center gap-2 sm:gap-3 hover:scale-110 transition-transform duration-200 cursor-pointer">
             <div className="flex items-center justify-center w-6 h-6 sm:w-8 sm:h-8 bg-[#FCA311] rounded-lg">
               <MapPin className="h-3 w-3 sm:h-5 sm:w-5 text-white" />
             </div>
@@ -28,7 +28,7 @@ export default function Navigation() {
               <span style={{ color: '#FCA311' }}>UW </span>
               <span style={{ color: '#FFFFFF' }}>Crowd</span>
             </span>
-          </div>
+          </Link>
 
           <div className="flex items-center gap-3 sm:gap-6 md:gap-8">
             {navigation.map((item) => (
