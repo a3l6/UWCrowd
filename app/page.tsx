@@ -3,13 +3,12 @@
 import { useState, useMemo } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button"
-import { ChevronDown, ChevronUp, Search, MapPin } from "lucide-react"
+import { Search, MapPin, ChevronUp, ChevronDown } from "lucide-react"
 
 interface Location {
   id: string
   name: string
-  busyLevel: number // 0-100 scale for busy level
+  busyLevel: number
   status: "busy" | "not-busy"
   lastUpdated: string
   metrics: {
@@ -93,21 +92,11 @@ export default function LocationsPage() {
   const [expandedCards, setExpandedCards] = useState<Set<string>>(new Set())
 
   const filteredAndSortedLocations = useMemo(() => {
-    const filtered = mockLocations.filter(
-      (location) =>
-        location.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        location.address?.toLowerCase().includes(searchTerm.toLowerCase())
+    const filtered = mockLocations.filter((location) =>
+      location.name.toLowerCase().includes(searchTerm.toLowerCase())
     )
 
-    return filtered.sort((a, b) => {
-      const aNameMatch = a.name.toLowerCase().includes(searchTerm.toLowerCase())
-      const bNameMatch = b.name.toLowerCase().includes(searchTerm.toLowerCase())
-
-      if (aNameMatch && !bNameMatch) return -1
-      if (!aNameMatch && bNameMatch) return 1
-
-      return b.busyLevel - a.busyLevel
-    })
+    return filtered.sort((a, b) => b.busyLevel - a.busyLevel)
   }, [searchTerm])
 
   const toggleExpanded = (locationId: string) => {
@@ -120,9 +109,8 @@ export default function LocationsPage() {
     setExpandedCards(newExpanded)
   }
 
-  const getAutoStatus = (busyLevel: number): "busy" | "not-busy" => {
-    return busyLevel > 50 ? "busy" : "not-busy"
-  }
+  const getAutoStatus = (busyLevel: number): "busy" | "not-busy" =>
+    busyLevel > 50 ? "busy" : "not-busy"
 
   const getBusyLevelColor = (busyLevel: number) => {
     const red = Math.round(255 * (busyLevel / 100))
@@ -133,7 +121,7 @@ export default function LocationsPage() {
   const getBusyLevelBgColor = (busyLevel: number) => {
     const red = Math.round(255 * (busyLevel / 100))
     const green = Math.round(255 * (1 - busyLevel / 100))
-    return `rgba(${red}, ${green}, 0, 0.1)`
+    return `rgba(${red}, ${green}, 0, 0.08)`
   }
 
   return (
@@ -141,8 +129,8 @@ export default function LocationsPage() {
       <div className="container mx-auto px-4 py-8 max-w-4xl">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-foreground mb-2 text-balance">UW Crowd</h1>
-          <p className="text-muted-foreground text-pretty">Know before you go</p>
+          <h1 className="text-3xl font-bold text-foreground mb-2">UW Crowd</h1>
+          <p className="text-muted-foreground">Real-time updates of UW Campus Building Capacities</p>
         </div>
 
         {/* Search Bar */}
@@ -150,23 +138,15 @@ export default function LocationsPage() {
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
           <Input
             type="text"
-            placeholder="Search locations by name or address..."
+            placeholder="Search locations..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10 h-12 text-base bg-card border-border focus:ring-2 focus:ring-ring focus:border-transparent"
+            className="pl-10 h-12 text-base bg-card border-border"
           />
         </div>
 
-        {/* Results Count */}
-        {searchTerm && (
-          <div className="mb-4 text-sm text-muted-foreground">
-            {filteredAndSortedLocations.length} location
-            {filteredAndSortedLocations.length !== 1 ? "s" : ""} found
-          </div>
-        )}
-
         {/* Location Cards */}
-        <div className="space-y-1">
+        <div className="space-y-2">
           {filteredAndSortedLocations.map((location) => {
             const isExpanded = expandedCards.has(location.id)
             const autoStatus = getAutoStatus(location.busyLevel)
@@ -174,49 +154,46 @@ export default function LocationsPage() {
             return (
               <Card
                 key={location.id}
-                className="w-full transition-all duration-200 hover:shadow-md border cursor-pointer hover:scale-[1.01]"
+                className="w-full transition-all duration-200 hover:shadow-lg border cursor-pointer hover:scale-[1.01]"
                 style={{
                   backgroundColor: getBusyLevelBgColor(location.busyLevel),
                   borderColor: getBusyLevelColor(location.busyLevel),
                 }}
                 onClick={() => toggleExpanded(location.id)}
               >
-                {/* Minimal vertical padding, small horizontal padding */}
-                <CardContent className="px-3 py-1">
-                  <div className="flex items-center justify-between gap-2">
-                    {/* Left side - Location name and icon */}
-                    <div className="flex items-center gap-1 flex-1 min-w-0">
+                <CardContent className="px-4 py-3">
+                  <div className="flex items-center justify-between gap-3">
+                    {/* Left side */}
+                    <div className="flex items-center gap-2 flex-1 min-w-0">
                       <MapPin className="h-4 w-4 text-primary flex-shrink-0" />
                       <h3 className="text-base font-semibold truncate text-foreground">
-                        {/* Full name on desktop/tablet */}
                         <span className="hidden md:inline">{location.name}</span>
-                        {/* Acronym on mobile */}
                         <span className="inline md:hidden">
                           {location.name.match(/\(([^)]+)\)/)?.[1] || location.name}
                         </span>
                       </h3>
                     </div>
 
-                    {/* Center - Busy meter */}
-                    <div className="flex items-center gap-1 flex-shrink-0">
-                      <div className="w-20 bg-secondary rounded-full h-1.5">
+                    {/* Busy Meter */}
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      <div className="w-20 lg:w-28 bg-secondary rounded-full h-2">
                         <div
-                          className="h-1.5 rounded-full transition-all duration-300"
+                          className="h-2 rounded-full transition-all duration-300"
                           style={{
                             width: `${location.busyLevel}%`,
                             backgroundColor: getBusyLevelColor(location.busyLevel),
                           }}
                         />
                       </div>
-                      <span className="text-xs font-medium text-foreground w-8">
+                      <span className="text-sm font-semibold text-foreground w-10">
                         {location.busyLevel}%
                       </span>
                     </div>
 
-                    {/* Right side - Status and expand button */}
-                    <div className="flex items-center gap-1 flex-shrink-0">
+                    {/* Status + Expand */}
+                    <div className="flex items-center gap-2 flex-shrink-0">
                       <span
-                        className="px-1 py-0.5 rounded-full text-xs font-medium text-white"
+                        className="px-2 py-1 rounded-full text-xs font-semibold text-white"
                         style={{ backgroundColor: getBusyLevelColor(location.busyLevel) }}
                       >
                         {autoStatus === "busy" ? "Busy" : "Not Busy"}
@@ -233,37 +210,38 @@ export default function LocationsPage() {
                   </div>
 
                   {isExpanded && (
-                    <div className="border-t border-border pt-1 mt-1 space-y-1 animate-in slide-in-from-top-2 duration-200">
-                      <div className="grid grid-cols-2 gap-1">
+                    <div className="border-t border-border pt-2 mt-2 space-y-2">
+                      <div className="grid grid-cols-2 gap-2">
                         <div>
-                          <h4 className="text-xs font-semibold mb-0.5 text-foreground">
+                          <h4 className="text-xs font-semibold text-foreground">
                             Predicted Business
                           </h4>
                           <p className="text-xs text-muted-foreground">
                             {location.metrics.predictedBusiness}
                           </p>
                         </div>
-
                         <div>
-                          <h4 className="text-xs font-semibold mb-0.5 text-foreground">People Count</h4>
+                          <h4 className="text-xs font-semibold text-foreground">People Count</h4>
                           <p className="text-xs text-muted-foreground">
                             {location.metrics.peopleCount} people
                           </p>
                         </div>
-
                         <div>
-                          <h4 className="text-xs font-semibold mb-0.5 text-foreground">Avg. Wait Time</h4>
-                          <p className="text-xs text-muted-foreground">{location.metrics.avgWaitTime}</p>
+                          <h4 className="text-xs font-semibold text-foreground">Avg. Wait Time</h4>
+                          <p className="text-xs text-muted-foreground">
+                            {location.metrics.avgWaitTime}
+                          </p>
                         </div>
-
                         <div>
-                          <h4 className="text-xs font-semibold mb-0.5 text-foreground">Peak Hours</h4>
-                          <p className="text-xs text-muted-foreground">{location.metrics.peakHours}</p>
+                          <h4 className="text-xs font-semibold text-foreground">Peak Hours</h4>
+                          <p className="text-xs text-muted-foreground">
+                            {location.metrics.peakHours}
+                          </p>
                         </div>
                       </div>
 
                       <div>
-                        <h4 className="text-xs font-semibold mb-0.5 text-foreground">Last Updated</h4>
+                        <h4 className="text-xs font-semibold text-foreground">Last Updated</h4>
                         <p className="text-xs text-muted-foreground">
                           {new Date(location.lastUpdated).toLocaleDateString("en-US", {
                             year: "numeric",
@@ -279,20 +257,10 @@ export default function LocationsPage() {
             )
           })}
         </div>
-
-        {/* No Results */}
-        {filteredAndSortedLocations.length === 0 && searchTerm && (
-          <div className="text-center py-12">
-            <MapPin className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-foreground mb-2">No locations found</h3>
-            <p className="text-muted-foreground">
-              Try adjusting your search terms or browse all locations
-            </p>
-          </div>
-        )}
       </div>
     </div>
   )
 }
+
 
 
