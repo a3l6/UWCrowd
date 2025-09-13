@@ -15,27 +15,27 @@ export default function Navigation() {
   const pathname = usePathname()
 
   return (
-    <nav className="bg-white border-b border-border shadow-sm">
+    <nav className="bg-[#14213D] border-b border-[#14213D] shadow-sm">
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           {/* Logo and Brand */}
-          <div className="flex items-center gap-3">
-            <div className="flex items-center justify-center w-8 h-8 bg-primary rounded-lg">
-              <MapPin className="h-5 w-5 text-primary-foreground" />
+          <div className="flex items-center gap-2 sm:gap-3">
+            <div className="flex items-center justify-center w-6 h-6 sm:w-8 sm:h-8 bg-[#FCA311] rounded-lg">
+              <MapPin className="h-3 w-3 sm:h-5 sm:w-5 text-white" />
             </div>
-            <span className="text-xl font-bold text-foreground">UW Crowd</span>
+            <span className="text-lg sm:text-xl font-bold text-white">UW Crowd</span>
           </div>
 
-          <div className="flex items-center gap-8">
+          <div className="flex items-center gap-3 sm:gap-6 md:gap-8">
             {navigation.map((item) => (
               <Link
                 key={item.name}
                 href={item.href}
                 className={cn(
-                  "text-sm font-medium transition-colors duration-200 relative",
+                  "text-xs sm:text-sm font-medium transition-colors duration-200 relative",
                   pathname === item.href
-                    ? "text-primary font-semibold after:absolute after:bottom-[-16px] after:left-0 after:right-0 after:h-0.5 after:bg-primary"
-                    : "text-muted-foreground hover:text-foreground",
+                    ? "text-white font-semibold after:absolute after:bottom-[-16px] after:left-0 after:right-0 after:h-0.5 after:bg-[#FCA311]"
+                    : "text-[#E5E5E5] hover:text-white",
                 )}
               >
                 {item.name}

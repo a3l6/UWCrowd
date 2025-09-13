@@ -23,7 +23,7 @@ interface Location {
 const mockLocations: Location[] = [
   {
     id: "1",
-    name: "PAC",
+    name: "Physical Activities Complex (PAC)",
     busyLevel: 85,
     status: "busy",
     lastUpdated: "2024-01-15",
@@ -36,7 +36,7 @@ const mockLocations: Location[] = [
   },
   {
     id: "2",
-    name: "CMH",
+    name: "Claudette Millar Hall (CMH)",
     busyLevel: 92,
     status: "busy",
     lastUpdated: "2024-01-12",
@@ -49,7 +49,7 @@ const mockLocations: Location[] = [
   },
   {
     id: "3",
-    name: "Dana Porter",
+    name: "Dana Porter Library (DP)",
     busyLevel: 67,
     status: "busy",
     lastUpdated: "2024-01-10",
@@ -62,7 +62,7 @@ const mockLocations: Location[] = [
   },
   {
     id: "4",
-    name: "E7",
+    name: "Engineering 7 (E7)",
     busyLevel: 45,
     status: "not-busy",
     lastUpdated: "2024-01-08",
@@ -75,7 +75,7 @@ const mockLocations: Location[] = [
   },
   {
     id: "5",
-    name: "DC",
+    name: "Davis Center (DC)",
     busyLevel: 10,
     status: "busy",
     lastUpdated: "2024-01-14",
@@ -96,7 +96,7 @@ export default function LocationsPage() {
     const filtered = mockLocations.filter(
       (location) =>
         location.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        location.address.toLowerCase().includes(searchTerm.toLowerCase())
+        location.address?.toLowerCase().includes(searchTerm.toLowerCase())
     )
 
     return filtered.sort((a, b) => {
@@ -136,10 +136,6 @@ export default function LocationsPage() {
     return `rgba(${red}, ${green}, 0, 0.1)`
   }
 
-  const getBusyLevelTextColor = (busyLevel: number) => {
-    return busyLevel > 70 ? "text-white" : "text-gray-900"
-  }
-
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8 max-w-4xl">
@@ -169,122 +165,134 @@ export default function LocationsPage() {
           </div>
         )}
 
-{/* Location Cards */}
-<div className="space-y-1">
-  {filteredAndSortedLocations.map((location) => {
-    const isExpanded = expandedCards.has(location.id)
+        {/* Location Cards */}
+        <div className="space-y-1">
+          {filteredAndSortedLocations.map((location) => {
+            const isExpanded = expandedCards.has(location.id)
+            const autoStatus = getAutoStatus(location.busyLevel)
 
-    const autoStatus = getAutoStatus(location.busyLevel)
-
-
-    return (
-      <Card
-  key={location.id}
-  className="w-full transition-all duration-200 hover:shadow-md border cursor-pointer hover:scale-[1.01]"
-        style={{
-          backgroundColor: getBusyLevelBgColor(location.busyLevel),
-          borderColor: getBusyLevelColor(location.busyLevel),
-        }}
-          onClick={() => toggleExpanded(location.id)} // ← HERE
-
-      >
-        {/* Minimal vertical padding, small horizontal padding */}
-        <CardContent className="px-3 py-1">
-          <div className="flex items-center justify-between gap-2">
-            {/* Left side - Location name and icon */}
-            <div className="flex items-center gap-1 flex-1 min-w-0">
-              <MapPin className="h-4 w-4 text-primary flex-shrink-0" />
-              <h3 className="text-base font-semibold truncate text-foreground">{location.name}</h3>
-            </div>
-
-            {/* Center - Busy meter */}
-            <div className="flex items-center gap-1 flex-shrink-0">
-              <span className="text-xs text-muted-foreground">Busy:</span>
-              <div className="w-20 bg-secondary rounded-full h-1.5">
-                <div
-                  className="h-1.5 rounded-full transition-all duration-300"
-                  style={{
-                    width: `${location.busyLevel}%`,
-                    backgroundColor: getBusyLevelColor(location.busyLevel),
-                  }}
-                />
-              </div>
-              <span className="text-xs font-medium text-foreground w-8">{location.busyLevel}%</span>
-            </div>
-
-            {/* Right side - Status and expand button */}
-            <div className="flex items-center gap-1 flex-shrink-0">
-              <span
-                className="px-1 py-0.5 rounded-full text-xs font-medium text-white"
-                style={{ backgroundColor: getBusyLevelColor(location.busyLevel) }}
+            return (
+              <Card
+                key={location.id}
+                className="w-full transition-all duration-200 hover:shadow-md border cursor-pointer hover:scale-[1.01]"
+                style={{
+                  backgroundColor: getBusyLevelBgColor(location.busyLevel),
+                  borderColor: getBusyLevelColor(location.busyLevel),
+                }}
+                onClick={() => toggleExpanded(location.id)}
               >
-                {autoStatus === "busy" ? "Busy" : "Not Busy"}
-              </span>
+                {/* Minimal vertical padding, small horizontal padding */}
+                <CardContent className="px-3 py-1">
+                  <div className="flex items-center justify-between gap-2">
+                    {/* Left side - Location name and icon */}
+                    <div className="flex items-center gap-1 flex-1 min-w-0">
+                      <MapPin className="h-4 w-4 text-primary flex-shrink-0" />
+                      <h3 className="text-base font-semibold truncate text-foreground">
+                        {/* Full name on desktop/tablet */}
+                        <span className="hidden md:inline">{location.name}</span>
+                        {/* Acronym on mobile */}
+                        <span className="inline md:hidden">
+                          {location.name.match(/\(([^)]+)\)/)?.[1] || location.name}
+                        </span>
+                      </h3>
+                    </div>
 
-              <div className="h-8 w-8 flex items-center justify-center">
-  {isExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-</div>
-            </div>
-          </div>
+                    {/* Center - Busy meter */}
+                    <div className="flex items-center gap-1 flex-shrink-0">
+                      <div className="w-20 bg-secondary rounded-full h-1.5">
+                        <div
+                          className="h-1.5 rounded-full transition-all duration-300"
+                          style={{
+                            width: `${location.busyLevel}%`,
+                            backgroundColor: getBusyLevelColor(location.busyLevel),
+                          }}
+                        />
+                      </div>
+                      <span className="text-xs font-medium text-foreground w-8">
+                        {location.busyLevel}%
+                      </span>
+                    </div>
 
-          {isExpanded && (
-            <div className="border-t border-border pt-1 mt-1 space-y-1 animate-in slide-in-from-top-2 duration-200">
-              <div className="grid grid-cols-2 gap-1">
-                <div>
-                  <h4 className="text-xs font-semibold mb-0.5 text-foreground">Predicted Business</h4>
-                  <p className="text-xs text-muted-foreground">{location.metrics.predictedBusiness}</p>
-                </div>
+                    {/* Right side - Status and expand button */}
+                    <div className="flex items-center gap-1 flex-shrink-0">
+                      <span
+                        className="px-1 py-0.5 rounded-full text-xs font-medium text-white"
+                        style={{ backgroundColor: getBusyLevelColor(location.busyLevel) }}
+                      >
+                        {autoStatus === "busy" ? "Busy" : "Not Busy"}
+                      </span>
 
-                <div>
-                  <h4 className="text-xs font-semibold mb-0.5 text-foreground">People Count</h4>
-                  <p className="text-xs text-muted-foreground">{location.metrics.peopleCount} people</p>
-                </div>
+                      <div className="h-8 w-8 flex items-center justify-center">
+                        {isExpanded ? (
+                          <ChevronUp className="h-4 w-4" />
+                        ) : (
+                          <ChevronDown className="h-4 w-4" />
+                        )}
+                      </div>
+                    </div>
+                  </div>
 
-                <div>
-                  <h4 className="text-xs font-semibold mb-0.5 text-foreground">Avg. Wait Time</h4>
-                  <p className="text-xs text-muted-foreground">{location.metrics.avgWaitTime}</p>
-                </div>
+                  {isExpanded && (
+                    <div className="border-t border-border pt-1 mt-1 space-y-1 animate-in slide-in-from-top-2 duration-200">
+                      <div className="grid grid-cols-2 gap-1">
+                        <div>
+                          <h4 className="text-xs font-semibold mb-0.5 text-foreground">
+                            Predicted Business
+                          </h4>
+                          <p className="text-xs text-muted-foreground">
+                            {location.metrics.predictedBusiness}
+                          </p>
+                        </div>
 
-                <div>
-                  <h4 className="text-xs font-semibold mb-0.5 text-foreground">Peak Hours</h4>
-                  <p className="text-xs text-muted-foreground">{location.metrics.peakHours}</p>
-                </div>
-              </div>
+                        <div>
+                          <h4 className="text-xs font-semibold mb-0.5 text-foreground">People Count</h4>
+                          <p className="text-xs text-muted-foreground">
+                            {location.metrics.peopleCount} people
+                          </p>
+                        </div>
 
-              <div>
-                <h4 className="text-xs font-semibold mb-0.5 text-foreground">Address</h4>
-                <p className="text-xs text-muted-foreground">{location.address}</p>
-              </div>
+                        <div>
+                          <h4 className="text-xs font-semibold mb-0.5 text-foreground">Avg. Wait Time</h4>
+                          <p className="text-xs text-muted-foreground">{location.metrics.avgWaitTime}</p>
+                        </div>
 
-              <div>
-                <h4 className="text-xs font-semibold mb-0.5 text-foreground">Last Updated</h4>
-                <p className="text-xs text-muted-foreground">
-                  {new Date(location.lastUpdated).toLocaleDateString("en-US", {
-                    year: "numeric",
-                    month: "long",
-                    day: "numeric",
-                  })}
-                </p>
-              </div>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-    )
-  })}
-</div>
+                        <div>
+                          <h4 className="text-xs font-semibold mb-0.5 text-foreground">Peak Hours</h4>
+                          <p className="text-xs text-muted-foreground">{location.metrics.peakHours}</p>
+                        </div>
+                      </div>
 
+                      <div>
+                        <h4 className="text-xs font-semibold mb-0.5 text-foreground">Last Updated</h4>
+                        <p className="text-xs text-muted-foreground">
+                          {new Date(location.lastUpdated).toLocaleDateString("en-US", {
+                            year: "numeric",
+                            month: "long",
+                            day: "numeric",
+                          })}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            )
+          })}
+        </div>
 
         {/* No Results */}
         {filteredAndSortedLocations.length === 0 && searchTerm && (
           <div className="text-center py-12">
             <MapPin className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
             <h3 className="text-lg font-semibold text-foreground mb-2">No locations found</h3>
-            <p className="text-muted-foreground">Try adjusting your search terms or browse all locations</p>
+            <p className="text-muted-foreground">
+              Try adjusting your search terms or browse all locations
+            </p>
           </div>
         )}
       </div>
     </div>
   )
 }
+
 
