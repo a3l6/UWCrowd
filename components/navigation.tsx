@@ -9,7 +9,7 @@ const navigation = [
   { name: "Home", href: "/" },
   { name: "Heatmap", href: "/heatmap" },
   { name: "About", href: "/about" },
-  
+
 ]
 
 export default function Navigation() {
@@ -25,8 +25,8 @@ export default function Navigation() {
               <MapPin className="h-3 w-3 sm:h-5 sm:w-5 text-white" />
             </div>
             <span className="text-lg sm:text-xl font-bold text-white">
-          <span style={{ color: '#FCA311' }}>UW </span>
-          <span style={{ color: '#FFFFFF' }}>Crowd</span>
+              <span style={{ color: '#FCA311' }}>UW </span>
+              <span style={{ color: '#FFFFFF' }}>Crowd</span>
             </span>
           </div>
 

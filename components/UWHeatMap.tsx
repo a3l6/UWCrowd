@@ -30,7 +30,7 @@ const buildingCoordinates: Record<string, [number, number]> = {
 // Building full names mapping
 const buildingNames: Record<string, string> = {
   "CMH": "Mathematics & Computer Building",
-  "PAC": "Physical Activities Complex", 
+  "PAC": "Physical Activities Complex",
   "DC": "William G. Davis Computer Research Centre",
   "E7": "Engineering 7",
   "Dana_Porter": "Dana Porter Library",
@@ -53,15 +53,15 @@ export function WaterlooHeatMap() {
       name: buildingNames[buildingKey] || buildingKey,
       shortName: buildingKey,
       currentOccupancy: data.people,
-      maxCapacity: buildingKey === "CMH" ? 600 : 
-                   buildingKey === "PAC" ? 200 :
-                   buildingKey === "DC" ? 1500 :
-                   buildingKey === "E7" ? 1550 :
-                   buildingKey === "Dana_Porter" ? 400 : 500,
+      maxCapacity: buildingKey === "CMH" ? 600 :
+        buildingKey === "PAC" ? 200 :
+          buildingKey === "DC" ? 1500 :
+            buildingKey === "E7" ? 1550 :
+              buildingKey === "Dana_Porter" ? 400 : 500,
       occupancyPercentage: data.percent_full,
       coordinates: buildingCoordinates[buildingKey] || [43.4723, -80.5449]
     }))
-    
+
     setBuildingData(convertedData)
     setLastUpdated(new Date())
 
@@ -319,223 +319,231 @@ export function WaterlooHeatMap() {
             <CardContent>
               <div
                 ref={mapRef}
-                className="w-full h-[500px] bg-muted rounded-lg border overflow-hidden"
+                className="w-full h-[500px] bg-muted rounded-lg border overflow-hidden shadow"
                 style={{ zIndex: 1 }}
               />
             </CardContent>
           </Card>
         </div>
 
-        <div className="space-y-4">
-          <DatabaseStatus />
-          
-          {selectedBuilding ? (
-            <Card>
+        <div className="flex flex-col h-[600px] space-y-4 overflow-hidden">
+          {/* Fixed DatabaseStatus at top */}
+          <div className="flex-shrink-0">
+            <DatabaseStatus />
+          </div>
+
+          {/* Scrollable content area */}
+          <div className="flex-1 min-h-0 overflow-y-auto border rounded-lg p-4 space-y-4 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100 shadow-lg bg-card">
+            {selectedBuilding ? (
+              <Card className="flex-shrink-0">
+                <CardHeader>
+                  <CardTitle className="flex items-center justify-between">
+                    <span>{selectedBuilding.shortName}</span>
+                    <Badge
+                      variant={getOccupancyLevel(selectedBuilding.occupancyPercentage).color as any}
+                      style={{
+                        backgroundColor: getHeatColor(selectedBuilding.occupancyPercentage),
+                        color: getTextColor(getHeatColor(selectedBuilding.occupancyPercentage))
+                      }}
+                    >
+                      {getOccupancyLevel(selectedBuilding.occupancyPercentage).label}
+                    </Badge>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div>
+                    <h4 className="font-medium text-sm text-muted-foreground mb-1">Building Name</h4>
+                    <p className="text-sm">{selectedBuilding.name}</p>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="p-3 rounded-lg border" style={{
+                      backgroundColor: `${getHeatColor(selectedBuilding.occupancyPercentage)}15`,
+                      borderColor: getHeatColor(selectedBuilding.occupancyPercentage)
+                    }}>
+                      <h4 className="font-medium text-sm text-muted-foreground mb-1">Current</h4>
+                      <div className="flex items-center gap-1">
+                        <Users className="h-4 w-4" style={{ color: getHeatColor(selectedBuilding.occupancyPercentage) }} />
+                        <span
+                          className="text-lg font-semibold transition-all duration-500"
+                          style={{ color: getHeatColor(selectedBuilding.occupancyPercentage) }}
+                        >
+                          {selectedBuilding.currentOccupancy}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="p-3 rounded-lg border border-muted">
+                      <h4 className="font-medium text-sm text-muted-foreground mb-1">Capacity</h4>
+                      <div className="flex items-center gap-1">
+                        <Users className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-lg font-semibold">{selectedBuilding.maxCapacity}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <h4 className="font-medium text-sm text-muted-foreground mb-2">Occupancy Rate</h4>
+                    <div className="space-y-2">
+                      <div className="flex justify-between text-sm">
+                        <span
+                          className="font-semibold transition-all duration-500"
+                          style={{ color: getHeatColor(selectedBuilding.occupancyPercentage) }}
+                        >
+                          {selectedBuilding.occupancyPercentage}%
+                        </span>
+                        <span>
+                          {selectedBuilding.currentOccupancy} / {selectedBuilding.maxCapacity}
+                        </span>
+                      </div>
+                      <div className="w-full bg-muted rounded-full h-3 overflow-hidden">
+                        <div
+                          className="h-3 rounded-full transition-all duration-1000 ease-in-out"
+                          style={{
+                            width: `${selectedBuilding.occupancyPercentage}%`,
+                            backgroundColor: getHeatColor(selectedBuilding.occupancyPercentage)
+                          }}
+                        ></div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Live indicator */}
+                  <div className="flex items-center justify-center gap-2 p-2 bg-muted rounded-md">
+                    <div
+                      className="w-2 h-2 rounded-full animate-pulse"
+                      style={{ backgroundColor: getHeatColor(selectedBuilding.occupancyPercentage) }}
+                    ></div>
+                    <span className="text-xs text-muted-foreground">Live Data</span>
+                  </div>
+                </CardContent>
+              </Card>
+            ) : (
+              <Card className="flex-shrink-0">
+                <CardContent className="flex items-center justify-center h-32 text-muted-foreground">
+                  <div className="text-center">
+                    <MapPin className="h-6 w-6 mx-auto mb-2 opacity-50" />
+                    <p className="text-sm">Click on a building to view details</p>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            <Card className="flex-shrink-0">
               <CardHeader>
-                <CardTitle className="flex items-center justify-between">
-                  <span>{selectedBuilding.shortName}</span>
-                  <Badge 
-                    variant={getOccupancyLevel(selectedBuilding.occupancyPercentage).color as any}
-                    style={{ 
-                      backgroundColor: getHeatColor(selectedBuilding.occupancyPercentage),
-                      color: getTextColor(getHeatColor(selectedBuilding.occupancyPercentage))
-                    }}
-                  >
-                    {getOccupancyLevel(selectedBuilding.occupancyPercentage).label}
-                  </Badge>
+                <CardTitle className="text-lg flex items-center justify-center gap-2">
+                  Campus Summary
+                  <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <h4 className="font-medium text-sm text-muted-foreground mb-1">Building Name</h4>
-                  <p className="text-sm">{selectedBuilding.name}</p>
+              <CardContent className="space-y-3">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-muted-foreground">Total Buildings</span>
+                  <span className="font-semibold">{buildingData.length}</span>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="p-3 rounded-lg border" style={{ 
-                    backgroundColor: `${getHeatColor(selectedBuilding.occupancyPercentage)}15`,
-                    borderColor: getHeatColor(selectedBuilding.occupancyPercentage)
-                  }}>
-                    <h4 className="font-medium text-sm text-muted-foreground mb-1">Current</h4>
-                    <div className="flex items-center gap-1">
-                      <Users className="h-4 w-4" style={{ color: getHeatColor(selectedBuilding.occupancyPercentage) }} />
-                      <span 
-                        className="text-lg font-semibold transition-all duration-500"
-                        style={{ color: getHeatColor(selectedBuilding.occupancyPercentage) }}
-                      >
-                        {selectedBuilding.currentOccupancy}
-                      </span>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-muted-foreground">Total Occupancy</span>
+                  <span className="font-semibold text-lg transition-all duration-500">
+                    {buildingData.reduce((sum, b) => sum + b.currentOccupancy, 0).toLocaleString()}
+                  </span>
+                </div>
+
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-muted-foreground">Total Capacity</span>
+                  <span className="font-semibold">
+                    {buildingData.reduce((sum, b) => sum + b.maxCapacity, 0).toLocaleString()}
+                  </span>
+                </div>
+
+                {(() => {
+                  const avgOccupancy = buildingData.length > 0
+                    ? Math.round(buildingData.reduce((sum, b) => sum + b.occupancyPercentage, 0) / buildingData.length)
+                    : 0;
+                  return (
+                    <div className="space-y-2">
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-muted-foreground">Average Occupancy</span>
+                        <span
+                          className="font-semibold text-lg transition-all duration-500"
+                          style={{ color: getHeatColor(avgOccupancy) }}
+                        >
+                          {avgOccupancy}%
+                        </span>
+                      </div>
+                      <div className="w-full bg-muted rounded-full h-2">
+                        <div
+                          className="h-2 rounded-full transition-all duration-1000 ease-in-out"
+                          style={{
+                            width: `${avgOccupancy}%`,
+                            backgroundColor: getHeatColor(avgOccupancy)
+                          }}
+                        ></div>
+                      </div>
                     </div>
-                  </div>
-                  <div className="p-3 rounded-lg border border-muted">
-                    <h4 className="font-medium text-sm text-muted-foreground mb-1">Capacity</h4>
-                    <div className="flex items-center gap-1">
-                      <Users className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-lg font-semibold">{selectedBuilding.maxCapacity}</span>
-                    </div>
+                  );
+                })()}
+
+                {/* Individual building status indicators */}
+                <div className="space-y-2 pt-2 border-t">
+                  <h5 className="text-xs font-semibold text-muted-foreground mb-2 text-center">Building Status</h5>
+                  <div className="space-y-1">
+                    {buildingData.map((building) => (
+                      <div key={building.id} className="flex items-center justify-between text-xs py-1">
+                        <div className="flex items-center gap-2">
+                          <div
+                            className="w-2 h-2 rounded-full transition-all duration-500"
+                            style={{ backgroundColor: getHeatColor(building.occupancyPercentage) }}
+                          ></div>
+                          <span className="font-medium">{building.shortName}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span
+                            className="font-semibold transition-all duration-500"
+                            style={{ color: getHeatColor(building.occupancyPercentage) }}
+                          >
+                            {building.currentOccupancy}
+                          </span>
+                          <span className="text-muted-foreground">
+                            ({building.occupancyPercentage}%)
+                          </span>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 </div>
 
-                <div>
-                  <h4 className="font-medium text-sm text-muted-foreground mb-2">Occupancy Rate</h4>
-                  <div className="space-y-2">
-                    <div className="flex justify-between text-sm">
-                      <span 
-                        className="font-semibold transition-all duration-500"
-                        style={{ color: getHeatColor(selectedBuilding.occupancyPercentage) }}
-                      >
-                        {selectedBuilding.occupancyPercentage}%
-                      </span>
-                      <span>
-                        {selectedBuilding.currentOccupancy} / {selectedBuilding.maxCapacity}
-                      </span>
-                    </div>
-                    <div className="w-full bg-muted rounded-full h-3 overflow-hidden">
-                      <div
-                        className="h-3 rounded-full transition-all duration-1000 ease-in-out"
-                        style={{ 
-                          width: `${selectedBuilding.occupancyPercentage}%`,
-                          backgroundColor: getHeatColor(selectedBuilding.occupancyPercentage)
-                        }}
-                      ></div>
-                    </div>
-                  </div>
-                </div>
+                {/* Campus status indicator */}
+                {(() => {
+                  const totalOccupancy = buildingData.reduce((sum, b) => sum + b.currentOccupancy, 0);
+                  const totalCapacity = buildingData.reduce((sum, b) => sum + b.maxCapacity, 0);
+                  const overallPercentage = totalCapacity > 0 ? Math.round((totalOccupancy / totalCapacity) * 100) : 0;
 
-                {/* Live indicator */}
-                <div className="flex items-center justify-center gap-2 p-2 bg-muted rounded-md">
-                  <div 
-                    className="w-2 h-2 rounded-full animate-pulse"
-                    style={{ backgroundColor: getHeatColor(selectedBuilding.occupancyPercentage) }}
-                  ></div>
-                  <span className="text-xs text-muted-foreground">Live Data</span>
-                </div>
+                  return (
+                    <div className="p-3 rounded-lg border transition-all duration-500" style={{
+                      backgroundColor: `${getHeatColor(overallPercentage)}15`,
+                      borderColor: getHeatColor(overallPercentage)
+                    }}>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium">Campus Status</span>
+                        <span
+                          className="text-sm font-bold"
+                          style={{ color: getHeatColor(overallPercentage) }}
+                        >
+                          {overallPercentage >= 80 ? "Very Busy" :
+                            overallPercentage >= 60 ? "Busy" :
+                              overallPercentage >= 40 ? "Moderate" :
+                                overallPercentage >= 20 ? "Light" : "Very Light"}
+                        </span>
+                      </div>
+                      <div className="text-xs text-muted-foreground mt-1 text-center">
+                        {totalOccupancy.toLocaleString()} / {totalCapacity.toLocaleString()} people ({overallPercentage}%)
+                      </div>
+                    </div>
+                  );
+                })()}
               </CardContent>
             </Card>
-          ) : (
-            <Card>
-              <CardContent className="flex items-center justify-center h-48 text-muted-foreground">
-                <div className="text-center">
-                  <MapPin className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                  <p>Click on a building to view details</p>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                Campus Summary
-                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-muted-foreground">Total Buildings</span>
-                <span className="font-semibold">{buildingData.length}</span>
-              </div>
-              
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-muted-foreground">Total Occupancy</span>
-                <span className="font-semibold text-lg transition-all duration-500">
-                  {buildingData.reduce((sum, b) => sum + b.currentOccupancy, 0).toLocaleString()}
-                </span>
-              </div>
-              
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-muted-foreground">Total Capacity</span>
-                <span className="font-semibold">
-                  {buildingData.reduce((sum, b) => sum + b.maxCapacity, 0).toLocaleString()}
-                </span>
-              </div>
-              
-              {(() => {
-                const avgOccupancy = buildingData.length > 0 
-                  ? Math.round(buildingData.reduce((sum, b) => sum + b.occupancyPercentage, 0) / buildingData.length)
-                  : 0;
-                return (
-                  <div className="space-y-2">
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm text-muted-foreground">Average Occupancy</span>
-                      <span 
-                        className="font-semibold text-lg transition-all duration-500"
-                        style={{ color: getHeatColor(avgOccupancy) }}
-                      >
-                        {avgOccupancy}%
-                      </span>
-                    </div>
-                    <div className="w-full bg-muted rounded-full h-2">
-                      <div
-                        className="h-2 rounded-full transition-all duration-1000 ease-in-out"
-                        style={{ 
-                          width: `${avgOccupancy}%`,
-                          backgroundColor: getHeatColor(avgOccupancy)
-                        }}
-                      ></div>
-                    </div>
-                  </div>
-                );
-              })()}
-
-              {/* Individual building status indicators */}
-              <div className="space-y-2 pt-2 border-t">
-                <h5 className="text-xs font-semibold text-muted-foreground mb-2">Building Status</h5>
-                {buildingData.map((building) => (
-                  <div key={building.id} className="flex items-center justify-between text-xs">
-                    <div className="flex items-center gap-2">
-                      <div 
-                        className="w-2 h-2 rounded-full transition-all duration-500"
-                        style={{ backgroundColor: getHeatColor(building.occupancyPercentage) }}
-                      ></div>
-                      <span className="font-medium">{building.shortName}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span 
-                        className="font-semibold transition-all duration-500"
-                        style={{ color: getHeatColor(building.occupancyPercentage) }}
-                      >
-                        {building.currentOccupancy}
-                      </span>
-                      <span className="text-muted-foreground">
-                        ({building.occupancyPercentage}%)
-                      </span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              {/* Campus status indicator */}
-              {(() => {
-                const totalOccupancy = buildingData.reduce((sum, b) => sum + b.currentOccupancy, 0);
-                const totalCapacity = buildingData.reduce((sum, b) => sum + b.maxCapacity, 0);
-                const overallPercentage = totalCapacity > 0 ? Math.round((totalOccupancy / totalCapacity) * 100) : 0;
-                
-                return (
-                  <div className="p-3 rounded-lg border transition-all duration-500" style={{
-                    backgroundColor: `${getHeatColor(overallPercentage)}15`,
-                    borderColor: getHeatColor(overallPercentage)
-                  }}>
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium">Campus Status</span>
-                      <span 
-                        className="text-sm font-bold"
-                        style={{ color: getHeatColor(overallPercentage) }}
-                      >
-                        {overallPercentage >= 80 ? "Very Busy" : 
-                         overallPercentage >= 60 ? "Busy" : 
-                         overallPercentage >= 40 ? "Moderate" : 
-                         overallPercentage >= 20 ? "Light" : "Very Light"}
-                      </span>
-                    </div>
-                    <div className="text-xs text-muted-foreground mt-1">
-                      {totalOccupancy.toLocaleString()} / {totalCapacity.toLocaleString()} people ({overallPercentage}%)
-                    </div>
-                  </div>
-                );
-              })()}
-            </CardContent>
-          </Card>
+          </div>
         </div>
       </div>
     </div>
