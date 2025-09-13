@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { RefreshCw, Users, Clock, MapPin } from "lucide-react"
+import { DatabaseStatus } from "./DatabaseStatus"
 
 interface BuildingData {
   id: string
@@ -208,6 +209,26 @@ export function WaterlooHeatMap() {
   const leafletMapRef = useRef<any>(null)
   const markersRef = useRef<any[]>([])
 
+  // Load initial data from API
+  useEffect(() => {
+    loadBuildingData()
+  }, [])
+
+  // Listen for real-time updates
+  useEffect(() => {
+    const handleDataUpdate = (event: CustomEvent) => {
+      setBuildingData(event.detail.buildings)
+      setLastUpdated(new Date(event.detail.lastUpdated))
+    }
+
+    window.addEventListener('buildingDataUpdated', handleDataUpdate as EventListener)
+    
+    return () => {
+      window.removeEventListener('buildingDataUpdated', handleDataUpdate as EventListener)
+    }
+  }, [])
+
+  // Initialize map
   useEffect(() => {
     if (typeof window !== "undefined" && mapRef.current && !leafletMapRef.current) {
       // Dynamically import Leaflet to avoid SSR issues
@@ -304,34 +325,36 @@ export function WaterlooHeatMap() {
     })
   }
 
+  // Load building data from API
+  const loadBuildingData = async () => {
+    try {
+      const response = await fetch('/api/information')
+      const data = await response.json()
+      
+      if (data.buildings && data.buildings.length > 0) {
+        setBuildingData(data.buildings)
+        setLastUpdated(new Date(data.lastUpdated))
+      }
+    } catch (error) {
+      console.error('Error loading building data:', error)
+    }
+  }
+
   const refreshData = async () => {
     setIsRefreshing(true)
-
-    await new Promise((resolve) => setTimeout(resolve, 1000))
-
-    const updatedData = buildingData.map((building) => {
-      const variation = (Math.random() - 0.5) * 0.2
-      const newOccupancy = Math.max(
-        0,
-        Math.min(building.maxCapacity, Math.round(building.currentOccupancy * (1 + variation))),
-      )
-
-      return {
-        ...building,
-        currentOccupancy: newOccupancy,
-        occupancyPercentage: Math.round((newOccupancy / building.maxCapacity) * 100),
-      }
-    })
-
-    setBuildingData(updatedData)
-    setLastUpdated(new Date())
+    await loadBuildingData()
     setIsRefreshing(false)
   }
 
-  useEffect(() => {
-    const interval = setInterval(refreshData, 30000)
-    return () => clearInterval(interval)
-  }, [buildingData])
+  // Trigger manual database save
+  const triggerDatabaseSave = async () => {
+    try {
+      await fetch('/api/information', { method: 'PUT' })
+      console.log('Manual database save triggered')
+    } catch (error) {
+      console.error('Error triggering database save:', error)
+    }
+  }
 
   const getHeatColor = (percentage: number): string => {
     // Normalize percentage to 0-1 range
@@ -417,6 +440,9 @@ export function WaterlooHeatMap() {
             <RefreshCw className={`h-4 w-4 mr-2 ${isRefreshing ? "animate-spin" : ""}`} />
             Refresh Data
           </Button>
+          <Button onClick={triggerDatabaseSave} variant="outline" size="sm">
+            Save to DB
+          </Button>
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <Clock className="h-4 w-4" />
             Last updated: {lastUpdated.toLocaleTimeString()}
@@ -466,6 +492,8 @@ export function WaterlooHeatMap() {
         </div>
 
         <div className="space-y-4">
+          <DatabaseStatus />
+          
           {selectedBuilding ? (
             <Card>
               <CardHeader>
