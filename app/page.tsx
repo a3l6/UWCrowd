@@ -1,9 +1,10 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useMemo, useEffect } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
-import { Search, MapPin, ChevronUp, ChevronDown } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { Search, MapPin, ChevronUp, ChevronDown, RefreshCw, Brain } from "lucide-react"
 
 interface Location {
   id: string
@@ -16,16 +17,21 @@ interface Location {
     peopleCount: number
     avgWaitTime: string
     peakHours: string
+    comparedToYesterday?: string
+    nextHourPrediction?: string
+    bestTimeToGo?: string
+    worstTimeToGo?: string
   }
 }
 
-const mockLocations: Location[] = [
+// Mock data as fallback
+const fallbackLocations: Location[] = [
   {
-    id: "1",
+    id: "pac",
     name: "Physical Activities Complex (PAC)",
     busyLevel: 85,
     status: "busy",
-    lastUpdated: "2024-01-15",
+    lastUpdated: new Date().toISOString(),
     metrics: {
       predictedBusiness: "High",
       peopleCount: 247,
@@ -34,11 +40,11 @@ const mockLocations: Location[] = [
     },
   },
   {
-    id: "2",
+    id: "cmh",
     name: "Claudette Millar Hall (CMH)",
     busyLevel: 92,
     status: "busy",
-    lastUpdated: "2024-01-12",
+    lastUpdated: new Date().toISOString(),
     metrics: {
       predictedBusiness: "Very High",
       peopleCount: 312,
@@ -46,58 +52,90 @@ const mockLocations: Location[] = [
       peakHours: "1:30-3:30 PM",
     },
   },
-  {
-    id: "3",
-    name: "Dana Porter Library (DP)",
-    busyLevel: 67,
-    status: "busy",
-    lastUpdated: "2024-01-10",
-    metrics: {
-      predictedBusiness: "Moderate",
-      peopleCount: 156,
-      avgWaitTime: "2-3 min",
-      peakHours: "11:00 AM-1:00 PM",
-    },
-  },
-  {
-    id: "4",
-    name: "Engineering 7 (E7)",
-    busyLevel: 45,
-    status: "not-busy",
-    lastUpdated: "2024-01-08",
-    metrics: {
-      predictedBusiness: "Low",
-      peopleCount: 10,
-      avgWaitTime: "1-2 min",
-      peakHours: "10:00 AM-12:00 PM",
-    },
-  },
-  {
-    id: "5",
-    name: "Davis Center (DC)",
-    busyLevel: 10,
-    status: "busy",
-    lastUpdated: "2024-01-14",
-    metrics: {
-      predictedBusiness: "High",
-      peopleCount: 203,
-      avgWaitTime: "3-4 min",
-      peakHours: "2:30-4:30 PM",
-    },
-  },
 ]
 
 export default function LocationsPage() {
   const [searchTerm, setSearchTerm] = useState("")
   const [expandedCards, setExpandedCards] = useState<Set<string>>(new Set())
+  const [locations, setLocations] = useState<Location[]>(fallbackLocations)
+  const [isLoading, setIsLoading] = useState(false)
+  const [lastUpdated, setLastUpdated] = useState<Date>(new Date())
+
+  // Load AI analysis data
+  const loadAIAnalysis = async () => {
+    setIsLoading(true)
+    try {
+      const response = await fetch('/api/ai-analysis')
+      const data = await response.json()
+      
+      if (data.success && data.data) {
+        const aiLocations: Location[] = data.data.map((analysis: any) => ({
+          id: analysis.buildingId,
+          name: `${analysis.buildingName} (${analysis.shortName})`,
+          busyLevel: analysis.busyLevel,
+          status: analysis.status,
+          lastUpdated: analysis.lastUpdated,
+          metrics: analysis.metrics,
+        }))
+        
+        setLocations(aiLocations)
+        setLastUpdated(new Date())
+      }
+    } catch (error) {
+      console.error('Error loading AI analysis:', error)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  // Force refresh AI analysis
+  const refreshAIAnalysis = async () => {
+    setIsLoading(true)
+    try {
+      const response = await fetch('/api/ai-analysis', { method: 'POST' })
+      const data = await response.json()
+      
+      if (data.success && data.data) {
+        const aiLocations: Location[] = data.data.map((analysis: any) => ({
+          id: analysis.buildingId,
+          name: `${analysis.buildingName} (${analysis.shortName})`,
+          busyLevel: analysis.busyLevel,
+          status: analysis.status,
+          lastUpdated: analysis.lastUpdated,
+          metrics: analysis.metrics,
+        }))
+        
+        setLocations(aiLocations)
+        setLastUpdated(new Date())
+      }
+    } catch (error) {
+      console.error('Error refreshing AI analysis:', error)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  // Load data on component mount
+  useEffect(() => {
+    loadAIAnalysis()
+  }, [])
+
+  // Auto-refresh every 20 minutes
+  useEffect(() => {
+    const interval = setInterval(() => {
+      loadAIAnalysis()
+    }, 20 * 60 * 1000) // 20 minutes
+
+    return () => clearInterval(interval)
+  }, [])
 
   const filteredAndSortedLocations = useMemo(() => {
-    const filtered = mockLocations.filter((location) =>
+    const filtered = locations.filter((location) =>
       location.name.toLowerCase().includes(searchTerm.toLowerCase())
     )
 
     return filtered.sort((a, b) => b.busyLevel - a.busyLevel)
-  }, [searchTerm])
+  }, [searchTerm, locations])
 
   const toggleExpanded = (locationId: string) => {
     const newExpanded = new Set(expandedCards)
@@ -129,8 +167,29 @@ export default function LocationsPage() {
       <div className="container mx-auto px-4 py-8 max-w-4xl">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-foreground mb-2">UW Crowd</h1>
-          <p className="text-muted-foreground">Real-time updates of UW Campus Building Capacities</p>
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold text-foreground mb-2 flex items-center gap-2">
+                <Brain className="h-8 w-8 text-primary" />
+                UW Crowd
+              </h1>
+              <p className="text-muted-foreground">AI-powered real-time analysis of UW Campus Building Capacities</p>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button 
+                onClick={refreshAIAnalysis} 
+                disabled={isLoading} 
+                variant="outline" 
+                size="sm"
+              >
+                <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? "animate-spin" : ""}`} />
+                Refresh AI
+              </Button>
+              <div className="text-xs text-muted-foreground">
+                Updated: {lastUpdated.toLocaleTimeString()}
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Search Bar */}
@@ -210,7 +269,51 @@ export default function LocationsPage() {
                   </div>
 
                   {isExpanded && (
-                    <div className="border-t border-border pt-2 mt-2 space-y-2">
+                    <div className="border-t border-border pt-3 mt-3 space-y-3">
+                      {/* AI Insights Section */}
+                      {(location.metrics.comparedToYesterday || location.metrics.nextHourPrediction) && (
+                        <div className="bg-blue-50 dark:bg-blue-950/20 p-2 rounded-md">
+                          <h4 className="text-xs font-semibold text-blue-800 dark:text-blue-200 mb-1 flex items-center gap-1">
+                            <Brain className="h-3 w-3" />
+                            AI Insights
+                          </h4>
+                          <div className="space-y-1">
+                            {location.metrics.comparedToYesterday && (
+                              <p className="text-xs text-blue-700 dark:text-blue-300">
+                                📊 {location.metrics.comparedToYesterday}
+                              </p>
+                            )}
+                            {location.metrics.nextHourPrediction && (
+                              <p className="text-xs text-blue-700 dark:text-blue-300">
+                                🔮 {location.metrics.nextHourPrediction}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Recommendations */}
+                      {(location.metrics.bestTimeToGo || location.metrics.worstTimeToGo) && (
+                        <div className="bg-green-50 dark:bg-green-950/20 p-2 rounded-md">
+                          <h4 className="text-xs font-semibold text-green-800 dark:text-green-200 mb-1">
+                            🎯 Recommendations
+                          </h4>
+                          <div className="space-y-1">
+                            {location.metrics.bestTimeToGo && (
+                              <p className="text-xs text-green-700 dark:text-green-300">
+                                ✅ {location.metrics.bestTimeToGo}
+                              </p>
+                            )}
+                            {location.metrics.worstTimeToGo && (
+                              <p className="text-xs text-green-700 dark:text-green-300">
+                                ❌ {location.metrics.worstTimeToGo}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Standard Metrics */}
                       <div className="grid grid-cols-2 gap-2">
                         <div>
                           <h4 className="text-xs font-semibold text-foreground">
@@ -247,6 +350,8 @@ export default function LocationsPage() {
                             year: "numeric",
                             month: "long",
                             day: "numeric",
+                            hour: "2-digit",
+                            minute: "2-digit",
                           })}
                         </p>
                       </div>
