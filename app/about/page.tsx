@@ -16,19 +16,6 @@ export default function AboutPage() {
 Making Student Life Smarter with Real-Time Campus Location Tracking          </p>
         </div>
 
-        {/* Team Image */}
-        <div className="mb-12">
-          <Card className="overflow-hidden">
-            <CardContent className="p-0">
-              <img
-                src="/professional-diverse-team-working-together-in-mode.jpg"
-                alt="LocationHub team working together"
-                className="w-full h-64 md:h-80 object-cover"
-              />
-            </CardContent>
-          </Card>
-        </div>
-
         {/* Mission Statement */}
         <div className="mb-12">
           <Card>
