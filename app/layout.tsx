@@ -13,9 +13,8 @@ const poppins = Poppins({
 })
 
 export const metadata: Metadata = {
-  title: "LocationHub",
+  title: "UWCrowd",
   description: "Professional location management system",
-  generator: "v0.app",
 }
 
 export default function RootLayout({
