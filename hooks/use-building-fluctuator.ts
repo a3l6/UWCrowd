@@ -219,13 +219,8 @@ export function useBuildingFluctuator() {
           const nextInterval = Math.random() * (maxInterval - minInterval) + minInterval;
           intervalRefs.current[buildingName] = setTimeout(fluctuateOnce, nextInterval);
         };
-<<<<<<< HEAD
         
-        // Start with a random initial delay to stagger the buildings
-=======
-
         // Start with a shorter random initial delay to stagger the buildings
->>>>>>> 464822d (changes)
         const initialDelay = Math.random() * 2000; // 0-2 seconds
         intervalRefs.current[buildingName] = setTimeout(fluctuateOnce, initialDelay);
       };
