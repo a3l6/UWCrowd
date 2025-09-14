@@ -199,27 +199,21 @@ Respond only with valid JSON, no additional text.
 
 function getMaxCapacity(buildingId: string): number {
   const capacities: Record<string, number> = {
-    'pac': 800,
     'cmh': 400,
-    'dc': 400,
+    'pac': 800,
+    'dc': 500,
     'e7': 400,
-    'mc': 600,
-    'slc': 1200,
-    'dana_porter': 400,
-    'e2': 500,
-    'e3': 350,
-    'e5': 450,
+    'dana_porter': 350,
   }
   return capacities[buildingId] || 300
 }
 
 export async function analyzeAllBuildings(): Promise<AIAnalysis[]> {
   const buildings = [
-    { id: 'pac', name: 'Physical Activities Complex', shortName: 'PAC' },
     { id: 'cmh', name: 'Claudette Millar Hall', shortName: 'CMH' },
-    { id: 'dc', name: 'Davis Center', shortName: 'DC' },
+    { id: 'pac', name: 'Physical Activities Complex', shortName: 'PAC' },
+    { id: 'dc', name: 'William G. Davis Computer Research Centre', shortName: 'DC' },
     { id: 'e7', name: 'Engineering 7', shortName: 'E7' },
-    { id: 'mc', name: 'Mathematics & Computer Building', shortName: 'MC' },
     { id: 'dana_porter', name: 'Dana Porter Library', shortName: 'Dana_Porter' },
   ]
 
