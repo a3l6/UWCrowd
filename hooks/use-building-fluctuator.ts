@@ -36,11 +36,11 @@ const fallbackConfig: BuildingConfig = {
     "Dana_Porter": 200
   },
   adjustmentFac: {
-    "CMH": 3,
+    "CMH": 0.0769,
     "PAC": 2,
-    "DC": 3,
-    "E7": 4,
-    "Dana_Porter": 3
+    "DC": 0.08,
+    "E7": 1,
+    "Dana_Porter": 2
   },
   buildingCapacity: {
     "CMH": 600,
@@ -216,7 +216,7 @@ export function useBuildingFluctuator() {
         };
         
         // Start with a random initial delay to stagger the buildings
-        const initialDelay = Math.random() * 60000; // 0-2 seconds
+        const initialDelay = Math.random() * 2000; // 0-2 seconds
         intervalRefs.current[buildingName] = setTimeout(fluctuateOnce, initialDelay);
       };
       
