@@ -4,7 +4,7 @@ import { useState, useMemo, useEffect } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { Search, MapPin, ChevronUp, ChevronDown, RefreshCw, Brain } from "lucide-react"
+import { Search, MapPin, ChevronUp, ChevronDown, RefreshCw } from "lucide-react"
 import { useBuildingFluctuator } from "@/hooks/use-building-fluctuator"
 
 interface Location {
@@ -27,7 +27,7 @@ interface Location {
 // Building names mapping for display
 const buildingDisplayNames: Record<string, string> = {
   "CMH": "Claudette Millar Hall (CMH)",
-  "PAC": "Physical Activities Complex (PAC)", 
+  "PAC": "Physical Activities Complex (PAC)",
   "DC": "William G. Davis Computer Research Centre (DC)",
   "E7": "Engineering 7 (E7)",
   "Dana_Porter": "Dana Porter Library (Dana_Porter)",
@@ -48,7 +48,7 @@ export default function LocationsPage() {
     try {
       const response = await fetch('/api/ai-analysis')
       const data = await response.json()
-      
+
       if (data.success && data.data) {
         setAiAnalysis(data.data)
         setLastUpdated(new Date())
@@ -66,7 +66,7 @@ export default function LocationsPage() {
     try {
       const response = await fetch('/api/ai-analysis', { method: 'POST' })
       const data = await response.json()
-      
+
       if (data.success && data.data) {
         setAiAnalysis(data.data)
         setLastUpdated(new Date())
@@ -96,8 +96,8 @@ export default function LocationsPage() {
   useEffect(() => {
     const combinedLocations: Location[] = Object.entries(fluctuatorData).map(([buildingKey, data]) => {
       // Find matching AI analysis for this building
-      const aiData = aiAnalysis.find(analysis => 
-        analysis.shortName === buildingKey || 
+      const aiData = aiAnalysis.find(analysis =>
+        analysis.shortName === buildingKey ||
         analysis.buildingId === buildingKey.toLowerCase()
       )
 
@@ -143,10 +143,10 @@ export default function LocationsPage() {
   }
 
   const filteredLocations = useMemo(() => {
-  return locations.filter((location) =>
-    location.name.toLowerCase().includes(searchTerm.toLowerCase())
-  )
-}, [searchTerm, locations])
+    return locations.filter((location) =>
+      location.name.toLowerCase().includes(searchTerm.toLowerCase())
+    )
+  }, [searchTerm, locations])
 
   const toggleExpanded = (locationId: string) => {
     const newExpanded = new Set(expandedCards)
@@ -174,57 +174,57 @@ export default function LocationsPage() {
   }
 
   return (
-<div className="min-h-screen bg-background">
-  <div className="container mx-auto px-4 py-8 max-w-4xl">
-    {/* Header */}
-    <div className="mt-8 mb-10">
-      <div className="flex items-center justify-between">
-        {/* Heading */}
-        <h1 className="text-3xl md:text-4xl font-extrabold mb-2 flex items-center gap-2">
-          <span style={{ color: '#FCA311' }}>UW</span>
-          <span style={{ color: '#14213D' }}>Crowd</span>
-        </h1>
+    <div className="min-h-screen bg-background">
+      <div className="container mx-auto px-4 py-8 max-w-4xl">
+        {/* Header */}
+        <div className="mt-8 mb-10">
+          <div className="flex items-center justify-between">
+            {/* Heading */}
+            <h1 className="text-3xl md:text-4xl font-extrabold mb-2 flex items-center gap-2">
+              <span style={{ color: '#FCA311' }}>UW</span>
+              <span style={{ color: '#14213D' }}>Crowd</span>
+            </h1>
 
-        {/* Button with updated timestamp underneath */}
-        <div className="flex flex-col items-end gap-1">
-          <div className="flex gap-2">
-            <Button
-              onClick={refreshAIAnalysis}
-              disabled={isLoading}
-              variant="outline"
-              size="sm"
-            >
-              <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
-              Refresh AI
-            </Button>
-            <div className="flex items-center gap-1 px-2 py-1 bg-green-100 dark:bg-green-900/20 rounded-md">
-              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-              <span className="text-xs text-green-700 dark:text-green-300">Live</span>
+            {/* Button with updated timestamp underneath */}
+            <div className="flex flex-col items-end gap-1">
+              <div className="flex gap-2">
+                <Button
+                  onClick={refreshAIAnalysis}
+                  disabled={isLoading}
+                  variant="outline"
+                  size="sm"
+                >
+                  <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
+                  Refresh AI
+                </Button>
+                <div className="flex items-center gap-1 px-2 py-1 bg-green-100 dark:bg-green-900/20 rounded-md">
+                  <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                  <span className="text-xs text-green-700 dark:text-green-300">Live</span>
+                </div>
+              </div>
+              <div className="text-xs text-muted-foreground">
+                AI Updated: {lastUpdated.toLocaleTimeString()}
+              </div>
             </div>
           </div>
-          <div className="text-xs text-muted-foreground">
-            AI Updated: {lastUpdated.toLocaleTimeString()}
-          </div>
+
+          {/* Slogan stays below the row if needed */}
+          <p className="mt-4 text-muted-foreground text-base md:text-lg">
+            Live building occupancy with AI-powered insights • Updates every second
+          </p>
         </div>
-      </div>
 
-      {/* Slogan stays below the row if needed */}
-      <p className="mt-4 text-muted-foreground text-base md:text-lg">
-        Live building occupancy with AI-powered insights • Updates every second
-      </p>
-    </div>
-
-    {/* Search Bar */}
-    <div className="relative mb-6">
-      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-      <Input
-        type="text"
-        placeholder="Search locations..."
-        value={searchTerm}
-        onChange={(e) => setSearchTerm(e.target.value)}
-        className="pl-10 h-12 text-base bg-card border-border"
-      />
-    </div>
+        {/* Search Bar */}
+        <div className="relative mb-6">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+          <Input
+            type="text"
+            placeholder="Search locations..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-10 h-12 text-base bg-card border-border"
+          />
+        </div>
 
 
         {/* Location Cards */}
@@ -232,7 +232,7 @@ export default function LocationsPage() {
           {filteredLocations.map((location) => {
             const isExpanded = expandedCards.has(location.id)
             const autoStatus = getAutoStatus(location.busyLevel)
-          
+
             return (
               <Card
                 key={location.id}
@@ -297,7 +297,7 @@ export default function LocationsPage() {
                       {(location.metrics.comparedToYesterday || location.metrics.nextHourPrediction) && (
                         <div className=" dark:bg-blue-950/20 p-2 rounded-md">
                           <h4 className="text-xs font-semibold text-blue-800 dark:text-blue-200 mb-1 flex items-center gap-1">
-                          
+
                             AI Insights
                           </h4>
                           <div className="space-y-1">

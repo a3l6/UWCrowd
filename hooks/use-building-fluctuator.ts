@@ -202,10 +202,8 @@ export function useBuildingFluctuator() {
           const currentBaseData = calculateBaseData(); // full fresh data
           const newData = { ...prevData };
 
-          // Use just the base for this building
-          const baseForBuilding = currentBaseData[buildingName] ?? prevData[buildingName];
-
-          newData[buildingName] = fluctuateBuilding(buildingName, baseForBuilding);
+          // Pass the full base data object, not just the single building
+          newData[buildingName] = fluctuateBuilding(buildingName, currentBaseData);
 
           saveFluctuatorData(newData); // persist
           return newData;
