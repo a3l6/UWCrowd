@@ -43,10 +43,10 @@ const fallbackConfig: BuildingConfig = {
     "Dana_Porter": 2
   },
   buildingCapacity: {
-    "CMH": 600,
+    "CMH": 650,
     "PAC": 200,
     "DC": 1500,
-    "E7": 1550,
+    "E7": 2000,
     "Dana_Porter": 400
   }
 };
@@ -88,12 +88,26 @@ export function useBuildingFluctuator() {
       else if (building.id === 'slc') key = 'Dana_Porter'; // Map SLC to Dana_Porter
 
       if (key) {
+        // Apply multiplication factors
+        let people = building.currentOccupancy;
+        let capacity = building.maxCapacity;
+        let multiplierNote = '';
+        
+        if (key === 'CMH') {
+          people = Math.round(building.currentOccupancy * 3.5);
+          multiplierNote = ' (x3.5 multiplier)';
+        } else if (key === 'E7') {
+          people = Math.round(building.currentOccupancy * 4);
+          capacity = 2000; // Override E7 capacity
+          multiplierNote = ' (x4 multiplier, 2000 capacity)';
+        }
+        
         baseData[key] = {
-          people: building.currentOccupancy,
-          capacity: building.maxCapacity
+          people: people,
+          capacity: capacity
         };
 
-        console.log(`[Fluctuator] Mapped ${building.id} (${building.shortName}) -> ${key}: ${building.currentOccupancy} people`);
+        console.log(`[Fluctuator] Mapped ${building.id} (${building.shortName}) -> ${key}: ${people} people${multiplierNote}`);
       }
     });
 
@@ -174,17 +188,27 @@ export function useBuildingFluctuator() {
     if (!buildingBase) return { people: 0, percent_full: 0 };
 
     const basePeople = buildingBase.people;
-    // Random percent between -0.5% and +0.5% for subtle fluctuation
-    const randomPercent = (Math.random() - 0.5) * 0.01; // -0.005 to +0.005
-
-    // Apply it to the base number
-    const noisyPeople = Math.max(
-      0,
-      Math.min(
-        buildingBase.capacity,
-        Math.round(basePeople * (1 + randomPercent))
-      )
-    );
+    
+    let noisyPeople;
+    if (buildingName === 'CMH') {
+      // For CMH, use absolute fluctuation of ±1-2 people instead of percentage
+      const absoluteVariation = Math.floor(Math.random() * 4) - 2; // -2 to +2 people
+      noisyPeople = Math.max(0, Math.min(buildingBase.capacity, basePeople + absoluteVariation));
+    } else if (buildingName === 'E7') {
+      // For E7, use absolute fluctuation of ±2-3 people instead of percentage
+      const absoluteVariation = Math.floor(Math.random() * 6) - 3; // -3 to +3 people
+      noisyPeople = Math.max(0, Math.min(buildingBase.capacity, basePeople + absoluteVariation));
+    } else {
+      // For other buildings, use percentage-based fluctuation
+      const randomPercent = (Math.random() - 0.5) * 0.01; // -0.005 to +0.005
+      noisyPeople = Math.max(
+        0,
+        Math.min(
+          buildingBase.capacity,
+          Math.round(basePeople * (1 + randomPercent))
+        )
+      );
+    }
     const percentFull = buildingBase.capacity > 0
       ? Math.round((noisyPeople / buildingBase.capacity) * 100 * 10) / 10
       : 0.0;

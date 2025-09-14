@@ -53,10 +53,10 @@ export function WaterlooHeatMap() {
       name: buildingNames[buildingKey] || buildingKey,
       shortName: buildingKey,
       currentOccupancy: data.people,
-      maxCapacity: buildingKey === "CMH" ? 600 :
+      maxCapacity: buildingKey === "CMH" ? 650 :
         buildingKey === "PAC" ? 200 :
           buildingKey === "DC" ? 1500 :
-            buildingKey === "E7" ? 1550 :
+            buildingKey === "E7" ? 2000 :
               buildingKey === "Dana_Porter" ? 400 : 500,
       occupancyPercentage: data.percent_full,
       coordinates: buildingCoordinates[buildingKey] || [43.4723, -80.5449]

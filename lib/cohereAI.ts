@@ -199,11 +199,11 @@ Respond only with valid JSON, no additional text.
 
 function getMaxCapacity(buildingId: string): number {
   const capacities: Record<string, number> = {
-    'cmh': 400,
-    'pac': 800,
-    'dc': 500,
-    'e7': 400,
-    'dana_porter': 350,
+    'cmh': 650,
+    'pac': 200,
+    'dc': 1500,
+    'e7': 2000,
+    'dana_porter': 400,
   }
   return capacities[buildingId] || 300
 }
