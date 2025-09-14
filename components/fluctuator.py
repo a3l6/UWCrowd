@@ -16,11 +16,11 @@ raw_count = {
 }
 
 adjustmentFac = {
-    "CMH": 3,
-    "PAC": 2,
-    "DC": 3,
-    "E7": 4,
-    "Dana_Porter": 3
+    "CMH": 0.0769,
+    "PAC": 1,
+    "DC": 0.08,
+    "E7": 1,
+    "Dana_Porter": 1
 }
 
 building_capacity = {

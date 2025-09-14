@@ -124,7 +124,7 @@ export function useBuildingFluctuator() {
     fetchRealData();
     
     // Set up periodic fetching every 30 seconds to get updated real data
-    fetchIntervalRef.current = setInterval(fetchRealData, 5000);
+    fetchIntervalRef.current = setInterval(fetchRealData, 240000);
     
     return () => {
       if (fetchIntervalRef.current) {
@@ -155,19 +155,23 @@ export function useBuildingFluctuator() {
   const fluctuateBuilding = (
     buildingName: string, 
     baseData: Record<string, { people: number; capacity: number }>,
-    noisePct: number = 0.05
+    noisePct: number = 0.002
   ): BuildingData => {
     const buildingBase = baseData[buildingName];
     if (!buildingBase) return { people: 0, percent_full: 0 };
     
     const basePeople = buildingBase.people;
-    const basePeopleInt = Math.max(0, Math.round(basePeople));
-    const noise = Math.max(1, Math.round(Math.abs(basePeople) * noisePct));
-    
-    // Generate random noise between -noise and +noise
-    const randomNoise = Math.floor(Math.random() * (2 * noise + 1)) - noise;
-    const noisyPeople = Math.max(0, Math.min(buildingBase.capacity, basePeopleInt + randomNoise));
-    
+      // Random percent between -0.5% and +0.5%
+    const randomPercent = (Math.random() - 0.5) * 0.0001; // -0.005 to +0.005
+
+    // Apply it to the base number
+    const noisyPeople = Math.max(
+      0,
+      Math.min(
+        buildingBase.capacity,
+        Math.round(basePeople * (1 + randomPercent))
+      )
+    );
     const percentFull = buildingBase.capacity > 0 
       ? Math.round((noisyPeople / buildingBase.capacity) * 100 * 10) / 10 
       : 0.0;
@@ -189,21 +193,24 @@ export function useBuildingFluctuator() {
     // Start a separate interval for each building with random timing
     Object.keys(baseData).forEach(buildingName => {
       // Random interval between 800ms and 2200ms (like Python's 10-30 seconds but faster)
-      const minInterval = 800;
-      const maxInterval = 2200;
+      const minInterval = 60000;
+      const maxInterval = 120000;
       
       const startBuildingFluctuation = () => {
         const fluctuateOnce = () => {
-          setBuildingData(prevData => {
-            const currentBaseData = calculateBaseData(); // Get fresh base data
-            const newData = { ...prevData };
-            newData[buildingName] = fluctuateBuilding(buildingName, currentBaseData);
-            
-            // Save to localStorage (equivalent to Python's JSON file write)
-            saveFluctuatorData(newData);
-            
-            return newData;
-          });
+        setBuildingData(prevData => {
+          const currentBaseData = calculateBaseData(); // full fresh data
+          const newData = { ...prevData };
+
+          // Use just the base for this building
+          const baseForBuilding = currentBaseData[buildingName] ?? prevData[buildingName];
+
+          newData[buildingName] = fluctuateBuilding(buildingName, baseForBuilding);
+
+          saveFluctuatorData(newData); // persist
+          return newData;
+        });
+
           
           // Schedule next fluctuation with random timing
           const nextInterval = Math.random() * (maxInterval - minInterval) + minInterval;
@@ -211,7 +218,7 @@ export function useBuildingFluctuator() {
         };
         
         // Start with a random initial delay to stagger the buildings
-        const initialDelay = Math.random() * 2000; // 0-2 seconds
+        const initialDelay = Math.random() * 60000; // 0-2 seconds
         intervalRefs.current[buildingName] = setTimeout(fluctuateOnce, initialDelay);
       };
       

@@ -142,13 +142,11 @@ export default function LocationsPage() {
     return peakHours[buildingKey] || "12:00-2:00 PM"
   }
 
-  const filteredAndSortedLocations = useMemo(() => {
-    const filtered = locations.filter((location) =>
-      location.name.toLowerCase().includes(searchTerm.toLowerCase())
-    )
-
-    return filtered.sort((a, b) => b.busyLevel - a.busyLevel)
-  }, [searchTerm, locations])
+  const filteredLocations = useMemo(() => {
+  return locations.filter((location) =>
+    location.name.toLowerCase().includes(searchTerm.toLowerCase())
+  )
+}, [searchTerm, locations])
 
   const toggleExpanded = (locationId: string) => {
     const newExpanded = new Set(expandedCards)
@@ -231,10 +229,10 @@ export default function LocationsPage() {
 
         {/* Location Cards */}
         <div className="space-y-2">
-          {filteredAndSortedLocations.map((location) => {
+          {filteredLocations.map((location) => {
             const isExpanded = expandedCards.has(location.id)
             const autoStatus = getAutoStatus(location.busyLevel)
-
+          
             return (
               <Card
                 key={location.id}
@@ -305,12 +303,12 @@ export default function LocationsPage() {
                           <div className="space-y-1">
                             {location.metrics.comparedToYesterday && (
                               <p className="text-xs text-blue-700 dark:text-blue-300">
-                                📊 {location.metrics.comparedToYesterday}
+                                {location.metrics.comparedToYesterday}
                               </p>
                             )}
                             {location.metrics.nextHourPrediction && (
                               <p className="text-xs text-blue-700 dark:text-blue-300">
-                                🔮 {location.metrics.nextHourPrediction}
+                                {location.metrics.nextHourPrediction}
                               </p>
                             )}
                           </div>
@@ -326,12 +324,12 @@ export default function LocationsPage() {
                           <div className="space-y-1">
                             {location.metrics.bestTimeToGo && (
                               <p className="text-xs text-green-700 dark:text-green-300">
-                                ✅ {location.metrics.bestTimeToGo}
+                                {location.metrics.bestTimeToGo}
                               </p>
                             )}
                             {location.metrics.worstTimeToGo && (
                               <p className="text-xs text-green-700 dark:text-green-300">
-                                ❌ {location.metrics.worstTimeToGo}
+                                {location.metrics.worstTimeToGo}
                               </p>
                             )}
                           </div>
