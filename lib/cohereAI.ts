@@ -205,6 +205,7 @@ function getMaxCapacity(buildingId: string): number {
     'e7': 400,
     'mc': 600,
     'slc': 1200,
+    'dana_porter': 400,
     'e2': 500,
     'e3': 350,
     'e5': 450,
@@ -219,6 +220,7 @@ export async function analyzeAllBuildings(): Promise<AIAnalysis[]> {
     { id: 'dc', name: 'Davis Center', shortName: 'DC' },
     { id: 'e7', name: 'Engineering 7', shortName: 'E7' },
     { id: 'mc', name: 'Mathematics & Computer Building', shortName: 'MC' },
+    { id: 'dana_porter', name: 'Dana Porter Library', shortName: 'Dana_Porter' },
   ]
 
   const analyses = await Promise.all(
