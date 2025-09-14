@@ -10,13 +10,24 @@ interface BuildingDisplay {
   [buildingName: string]: BuildingData;
 }
 
+interface APIBuildingData {
+  id: string;
+  name: string;
+  shortName: string;
+  currentOccupancy: number;
+  maxCapacity: number;
+  occupancyPercentage: number;
+  coordinates: [number, number];
+}
+
 interface BuildingConfig {
   rawCount: Record<string, number>;
   adjustmentFac: Record<string, number>;
   buildingCapacity: Record<string, number>;
 }
 
-const defaultConfig: BuildingConfig = {
+// Fallback config if API data is not available
+const fallbackConfig: BuildingConfig = {
   rawCount: {
     "CMH": 150,
     "PAC": 120,
@@ -40,29 +51,96 @@ const defaultConfig: BuildingConfig = {
   }
 };
 
-export function useBuildingFluctuator(config: BuildingConfig = defaultConfig) {
+export function useBuildingFluctuator() {
   const [buildingData, setBuildingData] = useState<BuildingDisplay>({});
+  const [realData, setRealData] = useState<APIBuildingData[]>([]);
   const intervalRefs = useRef<Record<string, NodeJS.Timeout>>({});
+  const fetchIntervalRef = useRef<NodeJS.Timeout | null>(null);
   
-  // Calculate corrected count from raw count and adjustment factors
-  const calculateCorrectedCount = (config: BuildingConfig) => {
-    const correctedCount: Record<string, number> = {};
-    Object.entries(config.rawCount).forEach(([building, raw]) => {
-      const fac = config.adjustmentFac[building] || 1;
-      correctedCount[building] = raw / fac;
-    });
-    return correctedCount;
+  // Fetch real data from API
+  const fetchRealData = async () => {
+    try {
+      const response = await fetch('/api/information');
+      const data = await response.json();
+      
+      if (data.buildings && Array.isArray(data.buildings)) {
+        setRealData(data.buildings);
+        console.log('[Fluctuator] Updated real data:', data.buildings.length, 'buildings');
+      }
+    } catch (error) {
+      console.error('[Fluctuator] Error fetching real data:', error);
+    }
   };
 
-  // Initialize building data
+  // Convert API data to base fluctuation data
+  const getBaseDataFromAPI = (): Record<string, { people: number; capacity: number }> => {
+    const baseData: Record<string, { people: number; capacity: number }> = {};
+    
+    realData.forEach(building => {
+      // Map API building IDs to fluctuator keys
+      let key = building.shortName;
+      if (building.id === 'mc') key = 'CMH';
+      else if (building.id === 'dc') key = 'DC';
+      else if (building.id === 'pac') key = 'PAC';
+      else if (building.id === 'e7') key = 'E7';
+      else if (building.shortName === 'SLC') key = 'Dana_Porter'; // Map SLC to Dana_Porter for now
+      
+      baseData[key] = {
+        people: building.currentOccupancy,
+        capacity: building.maxCapacity
+      };
+    });
+    
+    return baseData;
+  };
+
+  // Calculate base data (real data + fallback)
+  const calculateBaseData = () => {
+    const apiBaseData = getBaseDataFromAPI();
+    const baseData: Record<string, { people: number; capacity: number }> = {};
+    
+    // Use real data where available, fallback data otherwise
+    Object.keys(fallbackConfig.rawCount).forEach(buildingKey => {
+      if (apiBaseData[buildingKey]) {
+        // Use real API data
+        baseData[buildingKey] = apiBaseData[buildingKey];
+      } else {
+        // Use fallback data with adjustment factor
+        const raw = fallbackConfig.rawCount[buildingKey];
+        const fac = fallbackConfig.adjustmentFac[buildingKey] || 1;
+        baseData[buildingKey] = {
+          people: raw / fac,
+          capacity: fallbackConfig.buildingCapacity[buildingKey]
+        };
+      }
+    });
+    
+    return baseData;
+  };
+
+  // Fetch real data on mount and set up periodic fetching
   useEffect(() => {
-    const correctedCount = calculateCorrectedCount(config);
+    // Initial fetch
+    fetchRealData();
+    
+    // Set up periodic fetching every 30 seconds to get updated real data
+    fetchIntervalRef.current = setInterval(fetchRealData, 5000);
+    
+    return () => {
+      if (fetchIntervalRef.current) {
+        clearInterval(fetchIntervalRef.current);
+      }
+    };
+  }, []);
+
+  // Initialize building data when real data changes
+  useEffect(() => {
+    const baseData = calculateBaseData();
     
     const initialDisplay: BuildingDisplay = {};
-    Object.entries(correctedCount).forEach(([building, corrected]) => {
-      const capacity = config.buildingCapacity[building] || 1;
-      const people = Math.max(0, Math.round(corrected));
-      const percentFull = Math.round((people / capacity) * 100 * 10) / 10; // Round to 1 decimal
+    Object.entries(baseData).forEach(([building, data]) => {
+      const people = Math.max(0, Math.round(data.people));
+      const percentFull = Math.round((people / data.capacity) * 100 * 10) / 10; // Round to 1 decimal
       
       initialDisplay[building] = {
         people,
@@ -71,25 +149,27 @@ export function useBuildingFluctuator(config: BuildingConfig = defaultConfig) {
     });
     
     setBuildingData(initialDisplay);
-  }, [config]);
+  }, [realData]);
 
-  // Fluctuation function for a single building
+  // Fluctuation function for a single building using real data as base
   const fluctuateBuilding = (
     buildingName: string, 
-    correctedCount: Record<string, number>,
+    baseData: Record<string, { people: number; capacity: number }>,
     noisePct: number = 0.05
   ): BuildingData => {
-    const basePeople = correctedCount[buildingName] || 0;
+    const buildingBase = baseData[buildingName];
+    if (!buildingBase) return { people: 0, percent_full: 0 };
+    
+    const basePeople = buildingBase.people;
     const basePeopleInt = Math.max(0, Math.round(basePeople));
     const noise = Math.max(1, Math.round(Math.abs(basePeople) * noisePct));
     
     // Generate random noise between -noise and +noise
     const randomNoise = Math.floor(Math.random() * (2 * noise + 1)) - noise;
-    const noisyPeople = Math.max(0, basePeopleInt + randomNoise);
+    const noisyPeople = Math.max(0, Math.min(buildingBase.capacity, basePeopleInt + randomNoise));
     
-    const capacity = config.buildingCapacity[buildingName];
-    const percentFull = capacity && capacity > 0 
-      ? Math.round((noisyPeople / capacity) * 100 * 10) / 10 
+    const percentFull = buildingBase.capacity > 0 
+      ? Math.round((noisyPeople / buildingBase.capacity) * 100 * 10) / 10 
       : 0.0;
     
     return {
@@ -98,16 +178,16 @@ export function useBuildingFluctuator(config: BuildingConfig = defaultConfig) {
     };
   };
 
-  // Start independent fluctuation for each building
+  // Start independent fluctuation for each building using real data as base
   useEffect(() => {
-    const correctedCount = calculateCorrectedCount(config);
+    const baseData = calculateBaseData();
     
     // Clear any existing intervals
-    Object.values(intervalRefs.current).forEach(interval => clearInterval(interval));
+    Object.values(intervalRefs.current).forEach(interval => clearTimeout(interval));
     intervalRefs.current = {};
     
     // Start a separate interval for each building with random timing
-    Object.keys(correctedCount).forEach(buildingName => {
+    Object.keys(baseData).forEach(buildingName => {
       // Random interval between 800ms and 2200ms (like Python's 10-30 seconds but faster)
       const minInterval = 800;
       const maxInterval = 2200;
@@ -115,8 +195,9 @@ export function useBuildingFluctuator(config: BuildingConfig = defaultConfig) {
       const startBuildingFluctuation = () => {
         const fluctuateOnce = () => {
           setBuildingData(prevData => {
+            const currentBaseData = calculateBaseData(); // Get fresh base data
             const newData = { ...prevData };
-            newData[buildingName] = fluctuateBuilding(buildingName, correctedCount);
+            newData[buildingName] = fluctuateBuilding(buildingName, currentBaseData);
             
             // Save to localStorage (equivalent to Python's JSON file write)
             saveFluctuatorData(newData);
@@ -142,16 +223,15 @@ export function useBuildingFluctuator(config: BuildingConfig = defaultConfig) {
       Object.values(intervalRefs.current).forEach(interval => clearTimeout(interval));
       intervalRefs.current = {};
     };
-  }, [config]);
+  }, [realData]); // Restart fluctuations when real data changes
 
   // Get non-fluctuated raw percentages (for AI analysis)
   const getRawPercentages = () => {
-    const correctedCount = calculateCorrectedCount(config);
+    const baseData = calculateBaseData();
     const percentFullRaw: Record<string, number> = {};
     
-    Object.entries(correctedCount).forEach(([building, corrected]) => {
-      const capacity = config.buildingCapacity[building] || 1;
-      percentFullRaw[building] = Math.round((corrected / capacity) * 100 * 10) / 10;
+    Object.entries(baseData).forEach(([building, data]) => {
+      percentFullRaw[building] = Math.round((data.people / data.capacity) * 100 * 10) / 10;
     });
     
     return percentFullRaw;
@@ -160,6 +240,9 @@ export function useBuildingFluctuator(config: BuildingConfig = defaultConfig) {
   return {
     buildingData,
     rawPercentages: getRawPercentages(),
-    correctedCount: calculateCorrectedCount(config)
+    correctedCount: Object.fromEntries(
+      Object.entries(calculateBaseData()).map(([key, data]) => [key, data.people])
+    ),
+    realData // Expose real data for debugging
   };
 }

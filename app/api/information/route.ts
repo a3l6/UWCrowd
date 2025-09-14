@@ -59,7 +59,7 @@ export async function GET(request: NextRequest) {
           totalOccupancy: organizedData.buildings.reduce((sum, b) => sum + b.currentOccupancy, 0),
           totalCapacity: organizedData.buildings.reduce((sum, b) => sum + b.maxCapacity, 0),
           averageOccupancy: Math.round(
-            organizedData.buildings.reduce((sum, b) => sum + b.occupancyPercentage, 0) / 
+            organizedData.buildings.reduce((sum, b) => sum + b.occupancyPercentage, 0) /
             organizedData.buildings.length
           ),
         },
