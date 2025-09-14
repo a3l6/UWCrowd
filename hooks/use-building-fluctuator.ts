@@ -174,8 +174,8 @@ export function useBuildingFluctuator() {
     if (!buildingBase) return { people: 0, percent_full: 0 };
 
     const basePeople = buildingBase.people;
-    // Random percent between -2% and +2% for more noticeable fluctuation
-    const randomPercent = (Math.random() - 0.5) * 0.04; // -0.02 to +0.02
+    // Random percent between -0.5% and +0.5% for subtle fluctuation
+    const randomPercent = (Math.random() - 0.5) * 0.01; // -0.005 to +0.005
 
     // Apply it to the base number
     const noisyPeople = Math.max(
@@ -205,9 +205,9 @@ export function useBuildingFluctuator() {
 
     // Start a separate interval for each building with random timing
     Object.keys(baseData).forEach(buildingName => {
-      // Random interval between 2-4 seconds for more frequent updates
-      const minInterval = 2000;
-      const maxInterval = 4000;
+      // Random interval between 8-15 seconds for subtle updates
+      const minInterval = 8000;
+      const maxInterval = 15000;
 
       const startBuildingFluctuation = () => {
         const fluctuateOnce = () => {

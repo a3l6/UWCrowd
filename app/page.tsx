@@ -30,7 +30,7 @@ const buildingDisplayNames: Record<string, string> = {
   "PAC": "Physical Activities Complex (PAC)",
   "DC": "William G. Davis Computer Research Centre (DC)",
   "E7": "Engineering 7 (E7)",
-  "Dana_Porter": "Dana Porter Library (Dana_Porter)",
+  "Dana_Porter": "Dana Porter Library (DP)",
 }
 
 export default function LocationsPage() {
