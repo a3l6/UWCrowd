@@ -86,13 +86,13 @@ export function useBuildingFluctuator() {
       else if (building.id === 'dc') key = 'DC';
       else if (building.id === 'e7') key = 'E7';
       else if (building.id === 'slc') key = 'Dana_Porter'; // Map SLC to Dana_Porter
-      
+
       if (key) {
         baseData[key] = {
           people: building.currentOccupancy,
           capacity: building.maxCapacity
         };
-        
+
         console.log(`[Fluctuator] Mapped ${building.id} (${building.shortName}) -> ${key}: ${building.currentOccupancy} people`);
       }
     });
@@ -106,22 +106,29 @@ export function useBuildingFluctuator() {
     const apiBaseData = getBaseDataFromAPI();
     const baseData: Record<string, { people: number; capacity: number }> = {};
 
+    console.log('[Fluctuator] API base data available:', Object.keys(apiBaseData));
+    console.log('[Fluctuator] Fallback config keys:', Object.keys(fallbackConfig.rawCount));
+
     // Use real data where available, fallback data otherwise
     Object.keys(fallbackConfig.rawCount).forEach(buildingKey => {
       if (apiBaseData[buildingKey]) {
         // Use real API data
         baseData[buildingKey] = apiBaseData[buildingKey];
+        console.log(`[Fluctuator] Using API data for ${buildingKey}: ${apiBaseData[buildingKey].people} people`);
       } else {
         // Use fallback data with adjustment factor
         const raw = fallbackConfig.rawCount[buildingKey];
         const fac = fallbackConfig.adjustmentFac[buildingKey] || 1;
+        const fallbackPeople = raw / fac;
         baseData[buildingKey] = {
-          people: raw / fac,
+          people: fallbackPeople,
           capacity: fallbackConfig.buildingCapacity[buildingKey]
         };
+        console.log(`[Fluctuator] Using fallback data for ${buildingKey}: ${fallbackPeople} people (${raw}/${fac})`);
       }
     });
 
+    console.log('[Fluctuator] Final calculated base data:', baseData);
     return baseData;
   };
 
@@ -219,7 +226,7 @@ export function useBuildingFluctuator() {
           const nextInterval = Math.random() * (maxInterval - minInterval) + minInterval;
           intervalRefs.current[buildingName] = setTimeout(fluctuateOnce, nextInterval);
         };
-        
+
         // Start with a shorter random initial delay to stagger the buildings
         const initialDelay = Math.random() * 2000; // 0-2 seconds
         intervalRefs.current[buildingName] = setTimeout(fluctuateOnce, initialDelay);
